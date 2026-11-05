@@ -1,0 +1,54 @@
+<UserControl x:Class="StandUp.App.PresetPicker"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             FontFamily="{StaticResource AppFontFamily}"
+             FontSize="14">
+    <!-- 三個預設選項(30/5、60/5、自訂)。首次啟動畫面與設定視窗共用。 -->
+    <StackPanel>
+        <RadioButton x:Name="StandardRadio" Margin="0,0,0,14" Checked="OnPresetChecked">
+            <StackPanel>
+                <TextBlock FontWeight="Medium">
+                    <Run Text="工作 30 分鐘 / 休息 5 分鐘" />
+                    <Run Text="  建議" Foreground="{DynamicResource Glass.AccentBrush}" />
+                </TextBlock>
+                <TextBlock x:Name="StandardDescription" Margin="0,2,0,0" TextWrapping="Wrap"
+                           Foreground="{DynamicResource Glass.SubTextBrush}" />
+            </StackPanel>
+        </RadioButton>
+
+        <RadioButton x:Name="RelaxedRadio" Margin="0,0,0,14" Checked="OnPresetChecked">
+            <TextBlock FontWeight="Medium" Text="工作 60 分鐘 / 休息 10 分鐘" />
+        </RadioButton>
+
+        <RadioButton x:Name="CustomRadio" Checked="OnPresetChecked">
+            <TextBlock FontWeight="Medium" Text="自訂" />
+        </RadioButton>
+
+        <Grid x:Name="CustomPanel" Margin="24,10,0,0" Visibility="Collapsed">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="80" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.Row="0" Grid.Column="0" Text="工作間隔(1–180)" VerticalAlignment="Center" Margin="0,0,10,0" />
+            <TextBox x:Name="WorkBox" Grid.Row="0" Grid.Column="1" Padding="4,3" TextChanged="OnCustomTextChanged" />
+            <TextBlock Grid.Row="0" Grid.Column="2" Text="分鐘" VerticalAlignment="Center" Margin="8,0,0,0" />
+            <TextBlock x:Name="WorkError" Grid.Row="1" Grid.ColumnSpan="3" Foreground="{DynamicResource Glass.ErrorBrush}"
+                       FontSize="12" Visibility="Collapsed" Margin="0,2,0,0" />
+
+            <TextBlock Grid.Row="2" Grid.Column="0" Text="休息時長(1–30)" VerticalAlignment="Center" Margin="0,8,10,0" />
+            <TextBox x:Name="BreakBox" Grid.Row="2" Grid.Column="1" Padding="4,3" Margin="0,8,0,0"
+                     TextChanged="OnCustomTextChanged" />
+            <TextBlock Grid.Row="2" Grid.Column="2" Text="分鐘" VerticalAlignment="Center" Margin="8,8,0,0" />
+            <TextBlock x:Name="BreakError" Grid.Row="3" Grid.ColumnSpan="3" Foreground="{DynamicResource Glass.ErrorBrush}"
+                       FontSize="12" Visibility="Collapsed" Margin="0,2,0,0" />
+        </Grid>
+    </StackPanel>
+</UserControl>

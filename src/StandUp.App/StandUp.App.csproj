@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <AssemblyName>StandUp</AssemblyName>
+    <RootNamespace>StandUp.App</RootNamespace>
+    <Nullable>enable</Nullable>
+    <!-- WPF 與 WinForms 並用時,隱含 using 會造成 Application / Button 等型別名稱衝突,所以關掉。 -->
+    <ImplicitUsings>disable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Resource Include="Fonts\*.ttf" />
+    <None Include="Fonts\LICENSE.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\StandUp.Core\StandUp.Core.csproj" />
+  </ItemGroup>
+
+</Project>

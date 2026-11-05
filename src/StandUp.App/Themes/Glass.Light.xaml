@@ -1,0 +1,22 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- 淺色玻璃:視窗近乎透明(靠系統模糊),卡片是更亮的半透明白,藍色強調。 -->
+    <SolidColorBrush x:Key="Glass.WindowBrush" Color="#10FFFFFF" />
+    <SolidColorBrush x:Key="Glass.WindowFallbackBrush" Color="#E6F2F4F7" />
+    <SolidColorBrush x:Key="Glass.TextBrush" Color="#FF20242A" />
+    <SolidColorBrush x:Key="Glass.SubTextBrush" Color="#B820242A" />
+    <SolidColorBrush x:Key="Glass.CardBrush" Color="#24FFFFFF" />
+    <SolidColorBrush x:Key="Glass.CardHoverBrush" Color="#40FFFFFF" />
+    <SolidColorBrush x:Key="Glass.CardBorderBrush" Color="#B3FFFFFF" />
+    <SolidColorBrush x:Key="Glass.FieldBrush" Color="#40FFFFFF" />
+    <SolidColorBrush x:Key="Glass.AccentBrush" Color="#FF1F6FD1" />
+    <SolidColorBrush x:Key="Glass.OnAccentBrush" Color="#FFFFFFFF" />
+    <SolidColorBrush x:Key="Glass.ErrorBrush" Color="#FFC0392B" />
+    <SolidColorBrush x:Key="Glass.LinkBrush" Color="#FF1A6FB5" />
+    <SolidColorBrush x:Key="Glass.LinkHoverBrush" Color="#FF0B4A80" />
+    <Color x:Key="Glass.GlowColor">#FF1F6FD1</Color>
+    <LinearGradientBrush x:Key="Glass.AccentGradientBrush" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#FF4A95F0" Offset="0" />
+        <GradientStop Color="#FF1F6FD1" Offset="1" />
+    </LinearGradientBrush>
+</ResourceDictionary>

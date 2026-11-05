@@ -1,0 +1,71 @@
+<UserControl x:Class="StandUp.App.ResearchInfoPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:StandUp.App"
+             FontFamily="{StaticResource AppFontFamily}"
+             FontSize="14"
+             FontWeight="Medium">
+    <!-- 研究依據。首次啟動畫面與設定視窗的「研究依據與關於」分頁共用這一份,文字全部來自 HealthCopy。 -->
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+        <local:LetterSpacing x:Key="Spacing" />
+    </UserControl.Resources>
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="0,0,12,0">
+            <TextBlock x:Name="HeadingText" FontSize="18" FontWeight="Medium" />
+            <TextBlock x:Name="IntroText" Margin="0,6,0,0" TextWrapping="Wrap" />
+
+            <!-- 「閱讀更多」連結:預設收合,點擊展開研究摘要與限制。 -->
+            <ToggleButton x:Name="MoreToggle" Margin="0,10,0,0" HorizontalAlignment="Left" Cursor="Hand"
+                          AutomationProperties.Name="閱讀更多研究依據">
+                <ToggleButton.Template>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <TextBlock x:Name="Label" Text="閱讀更多研究依據 ▾" FontWeight="Medium"
+                                   Foreground="{DynamicResource Glass.LinkBrush}" TextDecorations="Underline" />
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Label" Property="Text" Value="收起 ▴" />
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Label" Property="Foreground" Value="{DynamicResource Glass.LinkHoverBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Label" Property="Background" Value="{DynamicResource Glass.CardHoverBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </ToggleButton.Template>
+            </ToggleButton>
+
+            <StackPanel Visibility="{Binding IsChecked, ElementName=MoreToggle, Converter={StaticResource BoolToVisibility}}">
+            <ItemsControl x:Name="StudyList" Margin="0,12,0,0">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Margin="0,0,0,10" Padding="12,10" CornerRadius="10"
+                                Background="{DynamicResource Glass.CardBrush}"
+                                BorderBrush="{DynamicResource Glass.CardBorderBrush}" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="{Binding Heading, Converter={StaticResource Spacing}}" FontWeight="Medium" />
+                                <TextBlock Text="{Binding Summary, Converter={StaticResource Spacing}}" Margin="0,4,0,0" TextWrapping="Wrap" />
+                                <TextBlock Text="{Binding Citation, Converter={StaticResource Spacing}}" Margin="0,6,0,0" TextWrapping="Wrap"
+                                           FontSize="12" Foreground="{DynamicResource Glass.SubTextBrush}" />
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <TextBlock x:Name="LimitationsHeadingText" Margin="0,6,0,0" FontWeight="Medium" />
+            <TextBlock x:Name="LimitationsText" Margin="0,4,0,0" TextWrapping="Wrap" />
+            <TextBlock x:Name="CannotVerifyText" Margin="0,6,0,0" TextWrapping="Wrap" />
+            </StackPanel>
+
+            <TextBlock x:Name="DisclaimerText" Margin="0,10,0,0" TextWrapping="Wrap" FontWeight="Medium" />
+
+            <StackPanel x:Name="AboutSection" Margin="0,18,0,0">
+                <TextBlock x:Name="AboutHeadingText" FontSize="18" FontWeight="Medium" />
+                <TextBlock x:Name="AboutBodyText" Margin="0,6,0,0" TextWrapping="Wrap" />
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
