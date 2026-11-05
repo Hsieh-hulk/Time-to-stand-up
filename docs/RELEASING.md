@@ -7,10 +7,10 @@
    powershell -ExecutionPolicy Bypass -File build\publish.ps1
    ```
 
-   腳本會依序:跑單元測試 → `dotnet publish`(Release、win-x64、內含 .NET 的單一 exe,輸出到 `publish\`)→ 用 Inno Setup 編譯 `installer\StandUp.iss` → 產出 `dist\StandUp-Setup-<版本>.exe`。
+   腳本會依序:跑單元測試 → `dotnet publish`(Release、win-x64、內含 .NET 的單一 exe,輸出到 `publish\`)→ 用 Inno Setup 編譯 `installer\StandUp.iss` → 產出 `dist\Time-to-stand-up-Setup-<版本>.exe`。
    加 `-SkipTests` 可略過測試。
 3. 在乾淨環境(或另一個 Windows 使用者帳號)照 [TESTING.md](TESTING.md) 的「安裝程式」段落驗證。
-4. 把 `dist\StandUp-Setup-<版本>.exe` 上傳到發佈處(例如 GitHub Releases)。`publish\` 與 `dist\` 不進版控。
+4. 把 `dist\Time-to-stand-up-Setup-<版本>.exe` 上傳到發佈處(例如 GitHub Releases)。`publish\` 與 `dist\` 不進版控。
 
 ## 前置需求
 

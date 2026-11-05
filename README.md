@@ -9,7 +9,7 @@ Windows 上的強制休息提醒工具。連續工作到設定的時間後,以�
 
 ## 安裝(一般使用者)
 
-1. 下載 `StandUp-Setup-<版本>.exe`。
+1. 下載 `Time-to-stand-up-Setup-<版本>.exe`。
 2. 執行後一路按「下一步」即可。不需要系統管理員權限,也不需要另外安裝 .NET。
    - 「開機時自動啟動」預設已勾選。
 3. 第一次啟動會出現歡迎畫面,選好提醒節奏後按「開始使用」。
@@ -45,7 +45,7 @@ dotnet run --project src/StandUp.App -- --config-dir C:\temp\standup-test --work
 powershell -ExecutionPolicy Bypass -File build\publish.ps1
 ```
 
-產出 `dist\StandUp-Setup-<版本>.exe`。細節見 [docs/RELEASING.md](docs/RELEASING.md)。
+產出 `dist\Time-to-stand-up-Setup-<版本>.exe`。細節見 [docs/RELEASING.md](docs/RELEASING.md)。
 
 ### 專案結構
 

@@ -1,5 +1,5 @@
 ﻿# Builds the release installer: tests -> self-contained single-file publish -> Inno Setup.
-# Output: dist\StandUp-Setup-<version>.exe
+# Output: dist\Time-to-stand-up-Setup-<version>.exe
 # Usage:  powershell -ExecutionPolicy Bypass -File build\publish.ps1 [-SkipTests]
 param(
     [switch]$SkipTests
@@ -40,5 +40,5 @@ if (-not $iscc) {
 & $iscc "/DMyAppVersion=$version" "/DPublishDir=$publishDir" (Join-Path $root 'installer\StandUp.iss')
 if ($LASTEXITCODE -ne 0) { throw 'Inno Setup compile failed' }
 
-$setup = Join-Path $root "dist\StandUp-Setup-$version.exe"
+$setup = Join-Path $root "dist\Time-to-stand-up-Setup-$version.exe"
 Write-Host "Installer: $setup"
