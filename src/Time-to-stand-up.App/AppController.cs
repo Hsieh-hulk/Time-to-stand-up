@@ -63,6 +63,7 @@ internal sealed class AppController : IDisposable
     {
         CreateTray();
         SystemEvents.DisplaySettingsChanged += OnDisplaySettingsChanged;
+        SystemEvents.UserPreferenceChanged += OnUserPreferenceChanged;
         _presence = new PresenceMonitor();
         _presence.AwayChanged += OnAwayChanged;
         _lastTick = _clock.UtcNow;
@@ -74,6 +75,7 @@ internal sealed class AppController : IDisposable
         _tick.Stop();
         _frame.Stop();
         SystemEvents.DisplaySettingsChanged -= OnDisplaySettingsChanged;
+        SystemEvents.UserPreferenceChanged -= OnUserPreferenceChanged;
         if (_presence is not null)
         {
             _presence.AwayChanged -= OnAwayChanged;
@@ -379,35 +381,33 @@ internal sealed class AppController : IDisposable
             _exitItem.Enabled = working;
     }
 
-    /// <summary>用程式畫一個簡單的圖示(橘底白字「站」),不依賴外部圖檔。</summary>
+    /// <summary>工作列(系統匣所在)目前是否為淺色;讀不到時視為深色(Windows 11 預設)。</summary>
+    private static bool TaskbarIsLight()
+    {
+        using var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize");
+        return key?.GetValue("SystemUsesLightTheme") is int value && value != 0;
+    }
+
+    /// <summary>依工作列深淺色載入內嵌 .ico:淺色用黑色人物、深色用白色人物,並挑系統小圖示尺寸的影格。</summary>
     private static Drawing.Icon CreateTrayIcon()
     {
-        using var bitmap = new Drawing.Bitmap(32, 32);
-        using (var g = Drawing.Graphics.FromImage(bitmap))
-        {
-            g.SmoothingMode = Drawing.Drawing2D.SmoothingMode.AntiAlias;
-            g.TextRenderingHint = Drawing.Text.TextRenderingHint.AntiAliasGridFit;
-            g.Clear(Drawing.Color.Transparent);
-            using var fill = new Drawing.SolidBrush(Drawing.Color.FromArgb(0xE0, 0x8A, 0x2E));
-            g.FillEllipse(fill, 1, 1, 30, 30);
-            using var font = new Drawing.Font("Microsoft JhengHei UI", 17, Drawing.FontStyle.Bold, Drawing.GraphicsUnit.Pixel);
-            var format = new Drawing.StringFormat
-            {
-                Alignment = Drawing.StringAlignment.Center,
-                LineAlignment = Drawing.StringAlignment.Center,
-            };
-            g.DrawString("站", font, Drawing.Brushes.White, new Drawing.RectangleF(0, 1, 32, 32), format);
-        }
+        var file = TaskbarIsLight() ? "Time-to-stand-up.ico" : "Time-to-stand-up-white.ico";
+        var info = Application.GetResourceStream(new Uri($"pack://application:,,,/Assets/{file}"));
+        using var stream = info.Stream;
+        return new Drawing.Icon(stream, Forms.SystemInformation.SmallIconSize);
+    }
 
-        var handle = bitmap.GetHicon();
-        try
+    private void OnUserPreferenceChanged(object? sender, UserPreferenceChangedEventArgs e)
+    {
+        if (e.Category is not (UserPreferenceCategory.General or UserPreferenceCategory.Color or UserPreferenceCategory.VisualStyle))
+            return;
+        Application.Current?.Dispatcher.BeginInvoke(() =>
         {
-            using var temp = Drawing.Icon.FromHandle(handle);
-            return (Drawing.Icon)temp.Clone();
-        }
-        finally
-        {
-            NativeMethods.DestroyIcon(handle);
-        }
+            if (_tray is null) return;
+            var old = _trayIcon;
+            _trayIcon = CreateTrayIcon();
+            _tray.Icon = _trayIcon;
+            old?.Dispose();
+        });
     }
 }

@@ -1,35 +1,68 @@
-﻿# Generates src/Time-to-stand-up.App/Assets/Time-to-stand-up.ico (orange circle with a white "站"),
-# matching the tray icon drawn in AppController.CreateTrayIcon.
+﻿# Generates src/Time-to-stand-up.App/Assets/Time-to-stand-up.ico (transparent background with a black stretching figure
+# from build/icon-source.png; icon by Freepik on Flaticon: https://www.flaticon.com/free-icon/stretching-exercises_10699).
+# Run with -Color White to produce Time-to-stand-up-white.ico (tray icon on dark taskbars);
+# the black one is the exe icon and the tray icon on light taskbars.
 # Only needed when the icon design changes; the .ico is committed to the repo.
 param(
-    [string]$OutFile = (Join-Path $PSScriptRoot '..\src\Time-to-stand-up.App\Assets\Time-to-stand-up.ico')
+    [ValidateSet('Black', 'White')][string]$Color = 'Black',
+    [string]$OutFile = ''
 )
+if (-not $OutFile) {
+    $name = if ($Color -eq 'White') { 'Time-to-stand-up-white.ico' } else { 'Time-to-stand-up.ico' }
+    $OutFile = Join-Path $PSScriptRoot "..\src\Time-to-stand-up.App\Assets\$name"
+}
 
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
 
 $sizes = 16, 24, 32, 48, 64, 128, 256
 $frames = @()
+$src = [System.Drawing.Image]::FromFile((Resolve-Path (Join-Path $PSScriptRoot 'icon-source.png')).Path)
+
+function Resize-Smooth([System.Drawing.Image]$img, [int]$w, [int]$h) {
+    # Premultiplied-alpha bitmap + high-quality bicubic + edge-clamped wrap: no dark halos or jagged edges.
+    $dst = New-Object System.Drawing.Bitmap $w, $h, ([System.Drawing.Imaging.PixelFormat]::Format32bppPArgb)
+    $gr = [System.Drawing.Graphics]::FromImage($dst)
+    $gr.CompositingMode = [System.Drawing.Drawing2D.CompositingMode]::SourceCopy
+    $gr.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
+    $gr.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::HighQuality
+    $gr.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::HighQuality
+    $ia = New-Object System.Drawing.Imaging.ImageAttributes
+    $ia.SetWrapMode([System.Drawing.Drawing2D.WrapMode]::TileFlipXY)
+    $gr.DrawImage($img, (New-Object System.Drawing.Rectangle 0, 0, $w, $h), 0, 0, $img.Width, $img.Height, [System.Drawing.GraphicsUnit]::Pixel, $ia)
+    $gr.Dispose(); $ia.Dispose()
+    return $dst
+}
 
 foreach ($size in $sizes) {
-    $bmp = New-Object System.Drawing.Bitmap $size, $size
+    # Fit the figure into the canvas (transparent background, black figure), shrinking in halving steps.
+    $h = [int][Math]::Round($size * 0.94)
+    $w = [int][Math]::Round($h * $src.Width / $src.Height)
+    $cur = $src
+    while ($cur.Height / 2 -gt $h) {
+        $next = Resize-Smooth $cur ([int]($cur.Width / 2)) ([int]($cur.Height / 2))
+        if ($cur -ne $src) { $cur.Dispose() }
+        $cur = $next
+    }
+    $fig = Resize-Smooth $cur $w $h
+    if ($cur -ne $src) { $cur.Dispose() }
+
+    $bmp = New-Object System.Drawing.Bitmap $size, $size, ([System.Drawing.Imaging.PixelFormat]::Format32bppPArgb)
     $g = [System.Drawing.Graphics]::FromImage($bmp)
-    $g.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
-    $g.TextRenderingHint = [System.Drawing.Text.TextRenderingHint]::AntiAliasGridFit
     $g.Clear([System.Drawing.Color]::Transparent)
-
-    $pad = [Math]::Max(1, [int]($size / 32))
-    $fill = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(0xE0, 0x8A, 0x2E))
-    $g.FillEllipse($fill, $pad, $pad, $size - 2 * $pad, $size - 2 * $pad)
-
-    $font = New-Object System.Drawing.Font 'Microsoft JhengHei UI', ($size * 17.0 / 32.0), ([System.Drawing.FontStyle]::Bold), ([System.Drawing.GraphicsUnit]::Pixel)
-    $format = New-Object System.Drawing.StringFormat
-    $format.Alignment = [System.Drawing.StringAlignment]::Center
-    $format.LineAlignment = [System.Drawing.StringAlignment]::Center
-    $rect = New-Object System.Drawing.RectangleF 0, ($size / 32.0), $size, $size
-    $g.DrawString([string][char]0x7AD9, $font, [System.Drawing.Brushes]::White, $rect, $format)
-
-    $g.Dispose(); $fill.Dispose(); $font.Dispose()
+    $g.CompositingMode = [System.Drawing.Drawing2D.CompositingMode]::SourceOver
+    $tint = New-Object System.Drawing.Imaging.ImageAttributes
+    if ($Color -eq 'White') {
+        # Keep alpha, force RGB to white.
+        $cm = New-Object System.Drawing.Imaging.ColorMatrix
+        $cm.Matrix00 = 0; $cm.Matrix11 = 0; $cm.Matrix22 = 0
+        $cm.Matrix40 = 1; $cm.Matrix41 = 1; $cm.Matrix42 = 1
+        $tint.SetColorMatrix($cm)
+    }
+    $destRect = New-Object System.Drawing.Rectangle ([int][Math]::Floor(($size - $w) / 2)), ([int][Math]::Floor(($size - $h) / 2)), $w, $h
+    $g.DrawImage($fig, $destRect, 0, 0, $fig.Width, $fig.Height, [System.Drawing.GraphicsUnit]::Pixel, $tint)
+    $tint.Dispose()
+    $g.Dispose(); $fig.Dispose()
 
     $ms = New-Object System.IO.MemoryStream
     if ($size -ge 256) {
