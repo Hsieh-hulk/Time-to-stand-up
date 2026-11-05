@@ -7,11 +7,10 @@ public class AppConfigTests
     [Fact]
     public void EffectiveTimesComeFromMinutes()
     {
-        var config = new AppConfig(30, 5, true, IdleMinutes: 4);
+        var config = new AppConfig(30, 5, true);
 
         Assert.Equal(TimeSpan.FromMinutes(30), config.EffectiveWorkInterval);
         Assert.Equal(TimeSpan.FromMinutes(5), config.EffectiveBreakDuration);
-        Assert.Equal(TimeSpan.FromMinutes(4), config.EffectiveIdleThreshold);
         Assert.Equal(TimeSpan.FromMinutes(30), config.ToBreakSettings().WorkInterval);
     }
 

@@ -5,20 +5,20 @@
 所有手動測試都建議用暫存設定資料夾啟動,不碰真正的 `%AppData%\StandUp`(刪掉該資料夾即可重看首次啟動畫面)。帶 `--config-dir` 時不做單一執行個體檢查,可以和已安裝的版本並存:
 
 ```bash
-dotnet run --project src/StandUp.App -- --config-dir C:\temp\standup-test --work 0.5 --break 0.3 --idle 0.2
+dotnet run --project src/StandUp.App -- --config-dir C:\temp\standup-test --work 0.5 --break 0.3
 ```
 
 命令列參數(只影響這次執行,不寫回設定檔):
 
-- `--work <分鐘>`、`--break <分鐘>`、`--idle <分鐘>`:覆寫工作間隔、休息時長、閒置門檻,可為小數(`0.5` = 30 秒)。
+- `--work <分鐘>`、`--break <分鐘>`:覆寫工作間隔、休息時長,可為小數(`0.5` = 30 秒)。
 - `--config-dir <資料夾>`:改用指定資料夾存放 `config.json`。
 
 ## 設定檔
 
-`config.json` 欄位:`workMinutes`、`breakMinutes`、`firstRunCompleted`、`theme`(`System` / `Light` / `Dark`)、`smartPause`(預設 true)、`idleMinutes`(1–30,預設 3)。
+`config.json` 欄位:`workMinutes`、`breakMinutes`、`firstRunCompleted`、`theme`(`System` / `Light` / `Dark`)、`smartPause`(預設 true)。
 
 - 預設選項不另存,由數值推導:30/5 = 標準(建議)、60/10 = 較寬鬆、其他 = 自訂。
-- 檔案不存在:使用預設值。JSON 損毀:使用預設值,壞檔改名為 `config.json.bak`,啟動時顯示說明。某欄位超出範圍或型別不對:只有該欄位回復預設。未知欄位(包含舊版的 `devMode`、`dev*Seconds`)會被忽略。
+- 檔案不存在:使用預設值。JSON 損毀:使用預設值,壞檔改名為 `config.json.bak`,啟動時顯示說明。某欄位超出範圍或型別不對:只有該欄位回復預設。未知欄位(包含舊版的 `devMode`、`dev*Seconds`、`idleMinutes`)會被忽略。
 - 寫入先寫暫存檔再取代。
 
 ## 程式流程
@@ -29,7 +29,7 @@ dotnet run --project src/StandUp.App -- --config-dir C:\temp\standup-test --work
 4. **儲存後立即生效,保留已累計的工作時間**:改成自訂 1 / 1 並儲存,休息會在**啟動後**約 1 分鐘出現。
 5. **休息開始時設定視窗自動關閉**,未儲存的修改被丟棄。休息期間系統匣的「立即休息」「設定…」「結束」都是灰的,解鎖後恢復。
 6. **休息畫面**:每個螢幕都被蓋住,沙漏倒數,結束後出現「解鎖」按鈕。
-7. **智慧暫停**:用 `--idle 0.2` 啟動後不動滑鼠鍵盤,工作計時暫停;離開時間達到休息時長,回來時系統匣跳出「已當作休息,重新開始計時」。鎖定(Win+L)與睡眠同理。
+7. **智慧暫停**:鎖定(Win+L)或睡眠期間工作計時暫停;離開時間達到休息時長,回來時系統匣跳出「已當作休息,重新開始計時」。**不偵測鍵盤滑鼠閒置**:長時間不動(例如看影片)計時照常,時間到仍會鎖定,需自行按「解鎖」。
 8. **單一執行個體**:不帶 `--config-dir` 連續啟動兩次,第二次只顯示「StandUp 已經在執行中」,系統匣只有一個圖示。
 9. **開機自動啟動核取方塊**:勾選 / 取消並儲存後,`HKCU\Software\Microsoft\Windows\CurrentVersion\Run` 的 `StandUp` 值跟著出現 / 消失。注意:用 `dotnet run` 勾選時,寫入的是當下 bin 資料夾的 exe 路徑。
 

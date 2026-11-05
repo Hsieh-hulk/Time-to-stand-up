@@ -28,7 +28,7 @@ public partial class App : Application
         catch (ArgumentException ex)
         {
             MessageBox.Show(
-                ex.Message + "\n\n用法:StandUp.exe [--work 分鐘] [--break 分鐘] [--idle 分鐘] [--config-dir 資料夾]",
+                ex.Message + "\n\n用法:StandUp.exe [--work 分鐘] [--break 分鐘] [--config-dir 資料夾]",
                 AppTitle,
                 MessageBoxButton.OK,
                 MessageBoxImage.Warning);
@@ -85,7 +85,7 @@ public partial class App : Application
             }
         }
 
-        _controller = new AppController(options.ResolveSettings(config), config, store, options);
+        _controller = new AppController(options.ResolveSettings(config), config, store);
         _controller.Start();
     }
 

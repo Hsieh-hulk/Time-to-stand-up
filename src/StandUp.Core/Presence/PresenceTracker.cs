@@ -7,11 +7,10 @@ public enum AwayReason
     None = 0,
     Locked = 1,
     Suspended = 2,
-    Idle = 4,
 }
 
 /// <summary>
-/// 追蹤使用者是否離開(鎖定、睡眠、閒置),回來時調整工作計時:
+/// 追蹤使用者是否離開(鎖定、睡眠),回來時調整工作計時:
 /// 離開不到休息時長 → 那段時間不算工作;離開達到休息時長 → 視為已休息,從回來那刻重新計時。
 /// 只在 Working 狀態調整;休息中的離開不影響倒數,回來仍要按解鎖。
 /// </summary>
@@ -39,7 +38,7 @@ public sealed class PresenceTracker
     public DateTimeOffset LastReturnAt { get; private set; } = DateTimeOffset.MinValue;
 
     /// <summary>
-    /// 開啟或關閉一個離開原因。<paramref name="since"/> 是離開實際開始的時間(例如閒置是從最後一次輸入算起),
+    /// 開啟或關閉一個離開原因。<paramref name="since"/> 是離開實際開始的時間,
     /// 省略則為現在。已開啟的原因再開一次不會改變開始時間。
     /// </summary>
     public void SetAway(AwayReason reason, bool on, DateTimeOffset? since = null)

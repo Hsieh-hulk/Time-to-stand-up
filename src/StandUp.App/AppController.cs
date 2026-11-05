@@ -23,7 +23,6 @@ internal sealed class AppController : IDisposable
     private readonly IClock _clock = new SystemClock();
     private readonly BreakStateMachine _machine;
     private readonly PresenceTracker _tracker;
-    private readonly CommandLineOptions _options;
     private PresenceMonitor? _presence;
     private DateTimeOffset _lastTick;
     private readonly List<BreakOverlayWindow> _overlays = new();
@@ -44,12 +43,10 @@ internal sealed class AppController : IDisposable
 
     /// <param name="settings">這次執行實際使用的設定(設定檔加上命令列覆寫)。</param>
     /// <param name="config">設定檔目前的內容,設定視窗以它為起點。</param>
-    /// <param name="options">命令列參數,用來取得這次執行的覆寫值(例如閒置門檻)。</param>
-    public AppController(BreakSettings settings, AppConfig config, ConfigStore store, CommandLineOptions options)
+    public AppController(BreakSettings settings, AppConfig config, ConfigStore store)
     {
         _config = config;
         _store = store;
-        _options = options;
         _machine = new BreakStateMachine(_clock, settings);
         _machine.StateChanged += OnStateChanged;
         _tracker = new PresenceTracker(_clock, _machine);
@@ -104,7 +101,6 @@ internal sealed class AppController : IDisposable
             // 睡眠事件沒處理到(上次回來早於上次 tick),用 tick 間隔補算這段離開。
             if (now - _lastTick > SleepGapThreshold && _tracker.LastReturnAt < _lastTick)
                 _tracker.ReportGap(_lastTick);
-            UpdateIdle(now);
         }
         _lastTick = now;
 
@@ -136,15 +132,6 @@ internal sealed class AppController : IDisposable
 
     private void OnFrame() => RefreshOverlays(animated: true);
 
-    private void UpdateIdle(DateTimeOffset now)
-    {
-        var idle = NativeMethods.GetIdleTime();
-        if (idle >= _options.ResolveIdleThreshold(_config))
-            _tracker.SetAway(AwayReason.Idle, true, since: now - idle);
-        else
-            _tracker.SetAway(AwayReason.Idle, false);
-    }
-
     private void OnAwayChanged(AwayReason reason, bool on, DateTimeOffset at)
     {
         if (!_config.SmartPause)
@@ -157,7 +144,6 @@ internal sealed class AppController : IDisposable
     {
         _tracker.SetAway(AwayReason.Locked, false);
         _tracker.SetAway(AwayReason.Suspended, false);
-        _tracker.SetAway(AwayReason.Idle, false);
     }
 
     private void OnReturned(TimeSpan away, bool reset)

@@ -75,15 +75,15 @@ public class PresenceTrackerTests
     }
 
     [Fact]
-    public void IdleStartsFromTheLastInputNotFromDetection()
+    public void AwayStartsFromTheGivenSinceNotFromDetection()
     {
         var f = new Fixture();
         f.Clock.Advance(Min(15));
 
-        // 偵測到時已閒置 3 分鐘:離開從 3 分鐘前算起。
-        f.Tracker.SetAway(AwayReason.Idle, true, since: f.Clock.UtcNow - Min(3));
+        // 偵測到時離開已 3 分鐘:離開從 3 分鐘前算起。
+        f.Tracker.SetAway(AwayReason.Suspended, true, since: f.Clock.UtcNow - Min(3));
         f.Clock.Advance(Min(1));
-        f.Tracker.SetAway(AwayReason.Idle, false);
+        f.Tracker.SetAway(AwayReason.Suspended, false);
 
         Assert.Equal(new[] { (Min(4), false) }, f.Returns);
         // 已過 16 分鐘,排除 4 分鐘 → 工作 12 分鐘,剩 18 分鐘。
@@ -97,9 +97,9 @@ public class PresenceTrackerTests
         f.Clock.Advance(Min(15));
 
         f.Tracker.SetAway(AwayReason.Locked, true);
-        f.Tracker.SetAway(AwayReason.Idle, true, since: f.Clock.UtcNow - Min(2));
+        f.Tracker.SetAway(AwayReason.Suspended, true, since: f.Clock.UtcNow - Min(2));
         f.Clock.Advance(Min(1));
-        f.Tracker.SetAway(AwayReason.Idle, false);
+        f.Tracker.SetAway(AwayReason.Suspended, false);
         f.Tracker.SetAway(AwayReason.Locked, false);
 
         Assert.Equal(new[] { (Min(3), false) }, f.Returns);
@@ -111,10 +111,10 @@ public class PresenceTrackerTests
         var f = new Fixture();
         f.Clock.Advance(Min(15));
 
-        f.Tracker.SetAway(AwayReason.Idle, true, since: f.Clock.UtcNow - Min(3));
+        f.Tracker.SetAway(AwayReason.Suspended, true, since: f.Clock.UtcNow - Min(3));
         f.Clock.Advance(Min(1));
-        f.Tracker.SetAway(AwayReason.Idle, true, since: f.Clock.UtcNow - Min(1));
-        f.Tracker.SetAway(AwayReason.Idle, false);
+        f.Tracker.SetAway(AwayReason.Suspended, true, since: f.Clock.UtcNow - Min(1));
+        f.Tracker.SetAway(AwayReason.Suspended, false);
 
         Assert.Equal(new[] { (Min(4), false) }, f.Returns);
     }
@@ -137,9 +137,9 @@ public class PresenceTrackerTests
         var f = new Fixture();
         f.Clock.Advance(Min(10));
 
-        f.Tracker.SetAway(AwayReason.Idle, true, since: f.Clock.UtcNow + Min(5));
+        f.Tracker.SetAway(AwayReason.Suspended, true, since: f.Clock.UtcNow + Min(5));
         f.Clock.Advance(Min(1));
-        f.Tracker.SetAway(AwayReason.Idle, false);
+        f.Tracker.SetAway(AwayReason.Suspended, false);
 
         Assert.Equal(new[] { (Min(1), false) }, f.Returns);
     }

@@ -84,7 +84,7 @@ public sealed class ConfigStoreTests : IDisposable
         var names = document.RootElement.EnumerateObject().Select(p => p.Name).ToArray();
 
         Assert.Equal(
-            new[] { "workMinutes", "breakMinutes", "firstRunCompleted", "theme", "smartPause", "idleMinutes" },
+            new[] { "workMinutes", "breakMinutes", "firstRunCompleted", "theme", "smartPause" },
             names);
     }
 
@@ -102,9 +102,9 @@ public sealed class ConfigStoreTests : IDisposable
     }
 
     [Fact]
-    public void SmartPauseAndIdleRoundTrip()
+    public void SmartPauseRoundTrip()
     {
-        var config = new AppConfig(30, 5, true, SmartPause: false, IdleMinutes: 12);
+        var config = new AppConfig(30, 5, true, SmartPause: false);
 
         Store.Save(config);
 
@@ -120,14 +120,21 @@ public sealed class ConfigStoreTests : IDisposable
 
         Assert.Equal(ConfigLoadStatus.Loaded, result.Status);
         Assert.True(result.Config.SmartPause);
-        Assert.Equal(AppConfig.DefaultIdleMinutes, result.Config.IdleMinutes);
+    }
+
+    [Fact]
+    public void LegacyIdleMinutesFieldIsIgnored()
+    {
+        WriteRaw("{\"workMinutes\": 40, \"breakMinutes\": 6, \"firstRunCompleted\": true, \"idleMinutes\": 99}");
+
+        var result = Store.Load();
+
+        Assert.Equal(ConfigLoadStatus.Loaded, result.Status);
+        Assert.Equal(new AppConfig(40, 6, true), result.Config);
     }
 
     [Theory]
     [InlineData("\"smartPause\": \"no\"")]
-    [InlineData("\"idleMinutes\": 0")]
-    [InlineData("\"idleMinutes\": 31")]
-    [InlineData("\"idleMinutes\": 2.5")]
     public void InvalidSmartPauseFieldsFallBackAlone(string field)
     {
         WriteRaw("{\"workMinutes\": 40, \"breakMinutes\": 6, \"firstRunCompleted\": true, " + field + "}");

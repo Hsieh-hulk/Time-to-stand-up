@@ -4,7 +4,7 @@ Windows 上的強制休息提醒工具。連續工作到設定的時間後,以�
 
 - 預設「工作 30 分鐘 / 休息 5 分鐘」,也可選 60/10 或自訂(工作 1–180 分鐘、休息 1–30 分鐘)。
 - 開機自動啟動,常駐在工作列右下角系統匣(橘色「站」圖示)。
-- 智慧暫停:電腦鎖定、睡眠或超過 3 分鐘沒有鍵盤滑鼠輸入時不計入工作時間;離開的時間達到休息時長,就當作已經休息過,回來重新計時。
+- 智慧暫停:電腦鎖定或睡眠時不計入工作時間(不偵測鍵盤滑鼠閒置,看影片、看直播不會被誤判為休息);離開的時間達到休息時長,就當作已經休息過,回來重新計時。
 - 多螢幕會全部蓋住;支援深色 / 淺色主題。
 
 ## 安裝(一般使用者)
@@ -36,7 +36,7 @@ dotnet test tests/StandUp.Tests
 測試時縮短時間(單位:分鐘,可為小數,不寫回設定檔),並改用暫存設定資料夾以免動到真正的設定:
 
 ```bash
-dotnet run --project src/StandUp.App -- --config-dir C:\temp\standup-test --work 0.5 --break 0.3 --idle 0.2
+dotnet run --project src/StandUp.App -- --config-dir C:\temp\standup-test --work 0.5 --break 0.3
 ```
 
 打包安裝程式(需要 [Inno Setup 6](https://jrsoftware.org/isinfo.php)):
@@ -53,7 +53,7 @@ powershell -ExecutionPolicy Bypass -File build\publish.ps1
 src/StandUp.Core/        與 UI 無關的邏輯(可單元測試)
   Breaks/                計時狀態機、沙漏模型、時鐘介面
   Config/                設定檔讀寫、命令列參數、輸入驗證
-  Presence/              離開偵測(鎖定 / 睡眠 / 閒置)後的計時調整
+  Presence/              離開偵測(鎖定 / 睡眠)後的計時調整
   Content/               研究依據等顯示文字
 src/StandUp.App/         WPF 應用程式
   App.xaml(.cs)          進入點:單一執行個體、讀設定、首次啟動
