@@ -1,9 +1,9 @@
 ﻿; Time-to-stand-up installer (Inno Setup 6).
 ; Build with build/publish.ps1, which publishes the app and passes MyAppVersion / PublishDir.
-; Manual build:  iscc /DMyAppVersion=1.0.1 /DPublishDir=..\publish installer\Time-to-stand-up.iss
+; Manual build:  iscc /DMyAppVersion=1.0.3 /DPublishDir=..\publish installer\Time-to-stand-up.iss
 
 #ifndef MyAppVersion
-  #define MyAppVersion "1.0.1"
+  #define MyAppVersion "1.0.3"
 #endif
 #ifndef PublishDir
   #define PublishDir "..\publish"
