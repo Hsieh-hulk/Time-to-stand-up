@@ -20,7 +20,7 @@
 
 ## 安裝程式行為(installer/StandUp.iss)
 
-- 每位使用者各自安裝到 `%LocalAppData%\Programs\StandUp`,不需要系統管理員權限。
+- 每位使用者各自安裝到 `%LocalAppData%\Programs\Time-to-stand-up`,不需要系統管理員權限(已安裝舊版的使用者升級時沿用原本的資料夾)。
 - 附加工作「開機時自動啟動」預設勾選,寫入 `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` 的 `StandUp` 值。這和程式內「開機時自動啟動」核取方塊(`Services/AutoStartManager.cs`)是同一個值,值名稱改了兩邊要一起改。
 - 安裝或升級前會結束執行中的 StandUp,以便覆蓋 exe;完成頁可勾選立即啟動。
 - 解除安裝會移除 Run 值與程式檔案,並詢問是否刪除 `%AppData%\StandUp` 設定檔(預設「否」)。

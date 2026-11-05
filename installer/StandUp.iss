@@ -27,9 +27,9 @@ AppVersion={#MyAppVersion}
 AppVerName={#MyAppName} {#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 VersionInfoVersion={#MyAppVersion}
-; Per-user install: no admin prompt, goes to %LocalAppData%\Programs\StandUp.
+; Per-user install: no admin prompt, goes to %LocalAppData%\Programs\Time-to-stand-up.
 PrivilegesRequired=lowest
-DefaultDirName={autopf}\StandUp
+DefaultDirName={autopf}\Time-to-stand-up
 DisableProgramGroupPage=yes
 DisableReadyPage=no
 OutputDir=..\dist

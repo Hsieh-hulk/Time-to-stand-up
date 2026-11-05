@@ -39,7 +39,7 @@ dotnet run --project src/StandUp.App -- --config-dir C:\temp\standup-test --work
 
 1. 執行 `dist\StandUp-Setup-<版本>.exe`:不跳出系統管理員權限要求;附加工作「開機時自動啟動」預設勾選、「建立桌面捷徑」預設不勾。
 2. 完成後程式啟動、出現首次啟動畫面;開始功能表有「StandUp 站起來」。
-3. Run 鍵有 `StandUp`,值為 `"%LocalAppData%\Programs\StandUp\StandUp.exe"`;**登出再登入**後程式自動出現在系統匣。
+3. Run 鍵有 `StandUp`,值為 `"%LocalAppData%\Programs\Time-to-stand-up\StandUp.exe"`;**登出再登入**後程式自動出現在系統匣。
 4. 程式執行中再跑一次安裝檔(升級):舊程式被自動結束、安裝成功、設定保留。
 5. 安裝時取消「開機時自動啟動」:Run 值被移除。
 6. 解除安裝:程式資料夾、捷徑、Run 值都被移除;詢問是否刪除設定檔,選「否」時 `%AppData%\StandUp` 仍在。
