@@ -31,6 +31,8 @@ VersionInfoVersion={#MyAppVersion}
 PrivilegesRequired=lowest
 DefaultDirName={autopf}\Time-to-stand-up
 DisableDirPage=no
+; Always start from DefaultDirName instead of the folder remembered from an earlier install.
+UsePreviousAppDir=no
 DisableProgramGroupPage=yes
 DisableReadyPage=no
 OutputDir=..\dist
