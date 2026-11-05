@@ -1,11 +1,11 @@
 # 手動測試與已知問題
 
-自動測試:`dotnet test tests/StandUp.Tests`。以下是需要人工確認的部分。
+自動測試:`dotnet test tests/Time-to-stand-up.Tests`。以下是需要人工確認的部分。
 
-所有手動測試都建議用暫存設定資料夾啟動,不碰真正的 `%AppData%\StandUp`(刪掉該資料夾即可重看首次啟動畫面)。帶 `--config-dir` 時不做單一執行個體檢查,可以和已安裝的版本並存:
+所有手動測試都建議用暫存設定資料夾啟動,不碰真正的 `%AppData%\Time-to-stand-up`(刪掉該資料夾即可重看首次啟動畫面)。帶 `--config-dir` 時不做單一執行個體檢查,可以和已安裝的版本並存:
 
 ```bash
-dotnet run --project src/StandUp.App -- --config-dir C:\temp\standup-test --work 0.5 --break 0.3
+dotnet run --project src/Time-to-stand-up.App -- --config-dir C:\temp\standup-test --work 0.5 --break 0.3
 ```
 
 命令列參數(只影響這次執行,不寫回設定檔):
@@ -30,19 +30,19 @@ dotnet run --project src/StandUp.App -- --config-dir C:\temp\standup-test --work
 5. **休息開始時設定視窗自動關閉**,未儲存的修改被丟棄。休息期間系統匣的「立即休息」「設定…」「結束」都是灰的,解鎖後恢復。
 6. **休息畫面**:每個螢幕都被蓋住,沙漏倒數,結束後出現「解鎖」按鈕。
 7. **智慧暫停**:鎖定(Win+L)或睡眠期間工作計時暫停;離開時間達到休息時長,回來時系統匣跳出「已當作休息,重新開始計時」。**不偵測鍵盤滑鼠閒置**:長時間不動(例如看影片)計時照常,時間到仍會鎖定,需自行按「解鎖」。
-8. **單一執行個體**:不帶 `--config-dir` 連續啟動兩次,第二次只顯示「StandUp 已經在執行中」,系統匣只有一個圖示。
-9. **開機自動啟動核取方塊**:勾選 / 取消並儲存後,`HKCU\Software\Microsoft\Windows\CurrentVersion\Run` 的 `StandUp` 值跟著出現 / 消失。注意:用 `dotnet run` 勾選時,寫入的是當下 bin 資料夾的 exe 路徑。
+8. **單一執行個體**:不帶 `--config-dir` 連續啟動兩次,第二次只顯示「Time-to-stand-up 已經在執行中」,系統匣只有一個圖示。
+9. **開機自動啟動核取方塊**:勾選 / 取消並儲存後,`HKCU\Software\Microsoft\Windows\CurrentVersion\Run` 的 `Time-to-stand-up` 值跟著出現 / 消失。注意:用 `dotnet run` 勾選時,寫入的是當下 bin 資料夾的 exe 路徑。
 
 ## 安裝程式
 
 在乾淨環境(另一個 Windows 帳號或 VM,最好沒裝 .NET)驗證:
 
 1. 執行 `dist\Time-to-stand-up-Setup-<版本>.exe`:不跳出系統管理員權限要求;附加工作「開機時自動啟動」預設勾選、「建立桌面捷徑」預設不勾。
-2. 完成後程式啟動、出現首次啟動畫面;開始功能表有「StandUp 站起來」。
-3. Run 鍵有 `StandUp`,值為 `"%LocalAppData%\Programs\Time-to-stand-up\StandUp.exe"`;**登出再登入**後程式自動出現在系統匣。
+2. 完成後程式啟動、出現首次啟動畫面;開始功能表有「Time-to-stand-up」。
+3. Run 鍵有 `Time-to-stand-up`,值為 `"%LocalAppData%\Programs\Time-to-stand-up\Time-to-stand-up.exe"`;**登出再登入**後程式自動出現在系統匣。
 4. 程式執行中再跑一次安裝檔(升級):舊程式被自動結束、安裝成功、設定保留。
 5. 安裝時取消「開機時自動啟動」:Run 值被移除。
-6. 解除安裝:程式資料夾、捷徑、Run 值都被移除;詢問是否刪除設定檔,選「否」時 `%AppData%\StandUp` 仍在。
+6. 解除安裝:程式資料夾、捷徑、Run 值都被移除;詢問是否刪除設定檔,選「否」時 `%AppData%\Time-to-stand-up` 仍在。
 
 ## 已知問題與限制
 
@@ -57,7 +57,7 @@ dotnet run --project src/StandUp.App -- --config-dir C:\temp\standup-test --work
 
 ## 研究引用的查證紀錄
 
-- App 內顯示「Duran 等人,2023(最後作者為 Diaz)」:PubMed 記載該篇(PMID 36728338)第一作者是 Duran AT。文字集中在 `src/StandUp.Core/Content/HealthCopy.cs`。
+- App 內顯示「Duran 等人,2023(最後作者為 Diaz)」:PubMed 記載該篇(PMID 36728338)第一作者是 Duran AT。文字集中在 `src/Time-to-stand-up.Core/Content/HealthCopy.cs`。
 - 只放摘要查得到的數字:Duran 2023——11 位受試者、連續坐 8 小時、5 種安排、只有每 30 分鐘走 5 分鐘使血糖反應顯著降低、所有走動安排收縮壓都較低(降幅最大為每 60 分鐘走 1 分鐘 5.2 mmHg、每 30 分鐘走 5 分鐘 4.3 mmHg)。
 - **不使用**(摘要查不到或過時):「血糖降 58%」、「血壓降 4–5 mmHg 相當於 6 個月運動」、「疲勞與情緒改善」、「唯一同時降血糖與血壓」、Diaz 2017 的「連續坐超過 30–60 分鐘」門檻、WHO 2002 年「全球 60–85% 久坐、每年 200 萬人死亡」。
 - Diaz 2017(PMID 28892811)只放 7,985 人、追蹤中位數 4 年與「兩項久坐指標各自都與全因死亡風險有關」。Dunstan 2012(PMID 22374636)的數字(19 位、45–65 歲、每 20 分鐘走 2 分鐘、血糖與胰島素較低)與摘要一致。

@@ -1,8 +1,0 @@
-<Application x:Class="StandUp.App.App"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <Application.Resources>
-        <!-- 內嵌 jf open 粉圓 2.1(只有 Regular 一種字重),缺字時退回微軟正黑體 UI。要換字型只需改這一行。 -->
-        <FontFamily x:Key="AppFontFamily">./Assets/Fonts/#jf-openhuninn-2.1, Microsoft JhengHei UI, Segoe UI</FontFamily>
-    </Application.Resources>
-</Application>

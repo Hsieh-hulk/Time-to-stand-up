@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <AssemblyName>Time-to-stand-up</AssemblyName>
+    <RootNamespace>TimeToStandUp.App</RootNamespace>
+    <Nullable>enable</Nullable>
+    <!-- WPF 與 WinForms 並用時,隱含 using 會造成 Application / Button 等型別名稱衝突,所以關掉。 -->
+    <ImplicitUsings>disable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\Time-to-stand-up.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <!-- 發佈設定(build/publish.ps1 使用):內含 .NET 執行環境的單一 exe。WPF 不支援 trim,所以不開。 -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <DebugType>none</DebugType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\Fonts\*.ttf" />
+    <None Include="Assets\Fonts\LICENSE.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Time-to-stand-up.Core\Time-to-stand-up.Core.csproj" />
+  </ItemGroup>
+
+</Project>

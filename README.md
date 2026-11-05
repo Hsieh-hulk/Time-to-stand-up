@@ -1,4 +1,4 @@
-# StandUp 站起來
+# Time-to-stand-up
 
 Windows 上的強制休息提醒工具。連續工作到設定的時間後,以全螢幕置頂畫面強制休息,倒數結束後按下「解鎖」才能繼續工作。
 
@@ -18,9 +18,9 @@ Windows 上的強制休息提醒工具。連續工作到設定的時間後,以�
 
 **Windows 顯示「Windows 已保護您的電腦」?** 這是因為安裝檔沒有付費的程式碼簽章,不代表有病毒。點「其他資訊」→「仍要執行」即可。
 
-**解除安裝:** Windows 設定 → 應用程式 → 已安裝的應用程式 → StandUp 站起來 → 解除安裝。過程中會詢問是否一併刪除設定檔。
+**解除安裝:** Windows 設定 → 應用程式 → 已安裝的應用程式 → Time-to-stand-up → 解除安裝。過程中會詢問是否一併刪除設定檔。
 
-設定檔位置:`%AppData%\StandUp\config.json`。
+設定檔位置:`%AppData%\Time-to-stand-up\config.json`。
 
 > 本工具不是醫療建議;預設節奏參考的研究與限制,請見程式內「設定 → 研究依據與關於」。
 
@@ -29,14 +29,14 @@ Windows 上的強制休息提醒工具。連續工作到設定的時間後,以�
 需要 .NET SDK 8 以上(已用 SDK 10 驗證)。
 
 ```bash
-dotnet run --project src/StandUp.App
-dotnet test tests/StandUp.Tests
+dotnet run --project src/Time-to-stand-up.App
+dotnet test tests/Time-to-stand-up.Tests
 ```
 
 測試時縮短時間(單位:分鐘,可為小數,不寫回設定檔),並改用暫存設定資料夾以免動到真正的設定:
 
 ```bash
-dotnet run --project src/StandUp.App -- --config-dir C:\temp\standup-test --work 0.5 --break 0.3
+dotnet run --project src/Time-to-stand-up.App -- --config-dir C:\temp\standup-test --work 0.5 --break 0.3
 ```
 
 打包安裝程式(需要 [Inno Setup 6](https://jrsoftware.org/isinfo.php)):
@@ -50,12 +50,12 @@ powershell -ExecutionPolicy Bypass -File build\publish.ps1
 ### 專案結構
 
 ```
-src/StandUp.Core/        與 UI 無關的邏輯(可單元測試)
+src/Time-to-stand-up.Core/        與 UI 無關的邏輯(可單元測試)
   Breaks/                計時狀態機、沙漏模型、時鐘介面
   Config/                設定檔讀寫、命令列參數、輸入驗證
   Presence/              離開偵測(鎖定 / 睡眠)後的計時調整
   Content/               研究依據等顯示文字
-src/StandUp.App/         WPF 應用程式
+src/Time-to-stand-up.App/         WPF 應用程式
   App.xaml(.cs)          進入點:單一執行個體、讀設定、首次啟動
   AppController.cs       把狀態機接到 UI 與系統匣
   Views/                 視窗(設定、首次啟動、休息畫面、休息前提示)
@@ -64,8 +64,8 @@ src/StandUp.App/         WPF 應用程式
   Interop/               Win32 API
   Theming/               主題切換與樣式(Themes/*.xaml)
   Assets/                字型、圖示
-tests/StandUp.Tests/     xUnit 測試,資料夾對應 Core
-installer/StandUp.iss    Inno Setup 安裝程式腳本
+tests/Time-to-stand-up.Tests/     xUnit 測試,資料夾對應 Core
+installer/Time-to-stand-up.iss    Inno Setup 安裝程式腳本
 build/                   publish.ps1(打包)、make-icon.ps1(產生圖示)
 docs/                    測試步驟、已知問題、待辦、發版流程
 ```
@@ -74,4 +74,4 @@ docs/                    測試步驟、已知問題、待辦、發版流程
 
 ## 授權
 
-程式碼採 MIT 授權(見 [LICENSE](LICENSE))。內嵌字型 jf open 粉圓的授權見 `src/StandUp.App/Assets/Fonts/LICENSE.txt`。
+程式碼採 MIT 授權(見 [LICENSE](LICENSE))。內嵌字型 jf open 粉圓的授權見 `src/Time-to-stand-up.App/Assets/Fonts/LICENSE.txt`。

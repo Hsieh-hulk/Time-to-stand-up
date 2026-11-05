@@ -1,8 +1,8 @@
-﻿# Generates src/StandUp.App/Assets/StandUp.ico (orange circle with a white "站"),
+﻿# Generates src/Time-to-stand-up.App/Assets/Time-to-stand-up.ico (orange circle with a white "站"),
 # matching the tray icon drawn in AppController.CreateTrayIcon.
 # Only needed when the icon design changes; the .ico is committed to the repo.
 param(
-    [string]$OutFile = (Join-Path $PSScriptRoot '..\src\StandUp.App\Assets\StandUp.ico')
+    [string]$OutFile = (Join-Path $PSScriptRoot '..\src\Time-to-stand-up.App\Assets\Time-to-stand-up.ico')
 )
 
 $ErrorActionPreference = 'Stop'

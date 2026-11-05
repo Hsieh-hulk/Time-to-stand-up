@@ -12,16 +12,16 @@ Set-Location $root
 [xml]$props = Get-Content -Raw -Encoding UTF8 (Join-Path $root 'Directory.Build.props')
 $version = ($props.Project.PropertyGroup | Where-Object { $_.Version } | Select-Object -First 1).Version
 if (-not $version) { throw 'Version not found in Directory.Build.props' }
-Write-Host "StandUp version $version"
+Write-Host "Time-to-stand-up version $version"
 
 if (-not $SkipTests) {
-    dotnet test tests\StandUp.Tests -c Release
+    dotnet test tests\Time-to-stand-up.Tests -c Release
     if ($LASTEXITCODE -ne 0) { throw 'Tests failed' }
 }
 
 $publishDir = Join-Path $root 'publish'
 if (Test-Path $publishDir) { Remove-Item -Recurse -Force $publishDir }
-dotnet publish src\StandUp.App -c Release -o $publishDir
+dotnet publish src\Time-to-stand-up.App -c Release -o $publishDir
 if ($LASTEXITCODE -ne 0) { throw 'dotnet publish failed' }
 
 $iscc = (Get-Command iscc.exe -ErrorAction SilentlyContinue).Source
@@ -37,7 +37,7 @@ if (-not $iscc) {
     throw 'Inno Setup 6 (ISCC.exe) not found. Install it with: winget install JRSoftware.InnoSetup'
 }
 
-& $iscc "/DMyAppVersion=$version" "/DPublishDir=$publishDir" (Join-Path $root 'installer\StandUp.iss')
+& $iscc "/DMyAppVersion=$version" "/DPublishDir=$publishDir" (Join-Path $root 'installer\Time-to-stand-up.iss')
 if ($LASTEXITCODE -ne 0) { throw 'Inno Setup compile failed' }
 
 $setup = Join-Path $root "dist\Time-to-stand-up-Setup-$version.exe"
