@@ -5,7 +5,7 @@ using StandUp.Core;
 namespace StandUp.App;
 
 /// <summary>
-/// 設定視窗(M2)。沒有任何保護機制:SPEC 3.5 尚未定案,保護機制是 M5 的議題。
+/// 設定視窗:提醒節奏、開機自動啟動、主題。沒有密碼等保護機制(見 docs/ROADMAP.md)。
 /// 休息一開始,呼叫端會用 <see cref="CloseWithoutSaving"/> 關掉它並丟棄未儲存的修改。
 /// </summary>
 public partial class SettingsWindow : Window
@@ -38,9 +38,11 @@ public partial class SettingsWindow : Window
 
         ApplyHint.Text = "儲存後立即生效,已累計的工作時間會保留。";
         Picker.SetValues(current.WorkMinutes, current.BreakMinutes);
-        Picker.SelectionChanged += (_, _) => SaveButton.IsEnabled = Picker.IsValid;
-        SaveButton.IsEnabled = Picker.IsValid;
+        Picker.SelectionChanged += (_, _) => UpdateSaveEnabled();
+        UpdateSaveEnabled();
     }
+
+    private void UpdateSaveEnabled() => SaveButton.IsEnabled = Picker.IsValid;
 
     private const double DesignSize = 560;
 
@@ -74,7 +76,13 @@ public partial class SettingsWindow : Window
         }
 
         _saved = true;
-        SaveRequested?.Invoke(new AppConfig(Picker.WorkMinutes, Picker.BreakMinutes, _current.FirstRunCompleted, _theme));
+        // 用 with 保留視窗沒有編輯的欄位(例如智慧暫停),避免儲存時被洗回預設。
+        SaveRequested?.Invoke(_current with
+        {
+            WorkMinutes = Picker.WorkMinutes,
+            BreakMinutes = Picker.BreakMinutes,
+            Theme = _theme,
+        });
         Close();
     }
 

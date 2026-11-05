@@ -75,7 +75,7 @@ public sealed class ConfigStoreTests : IDisposable
     }
 
     [Fact]
-    public void SaveWritesOnlyTheFourFieldsAndNoDerivedPreset()
+    public void SaveWritesOnlyTheStoredFieldsAndNoDerivedPreset()
     {
         Store.Save(new AppConfig(60, 5, true));
 
@@ -83,7 +83,59 @@ public sealed class ConfigStoreTests : IDisposable
             File.ReadAllText(Path.Combine(_dir, ConfigStore.FileName)));
         var names = document.RootElement.EnumerateObject().Select(p => p.Name).ToArray();
 
-        Assert.Equal(new[] { "workMinutes", "breakMinutes", "firstRunCompleted", "theme" }, names);
+        Assert.Equal(
+            new[] { "workMinutes", "breakMinutes", "firstRunCompleted", "theme", "smartPause", "idleMinutes" },
+            names);
+    }
+
+    [Fact]
+    public void LegacyDevFieldsAreIgnored()
+    {
+        // 舊版有開發者模式;這些欄位現在是未知欄位,讀取時忽略,不算被重設。
+        WriteRaw("{\"workMinutes\": 40, \"breakMinutes\": 6, \"firstRunCompleted\": true, "
+            + "\"devMode\": true, \"devWorkSeconds\": 20, \"devBreakSeconds\": \"x\"}");
+
+        var result = Store.Load();
+
+        Assert.Equal(ConfigLoadStatus.Loaded, result.Status);
+        Assert.Equal(new AppConfig(40, 6, true), result.Config);
+    }
+
+    [Fact]
+    public void SmartPauseAndIdleRoundTrip()
+    {
+        var config = new AppConfig(30, 5, true, SmartPause: false, IdleMinutes: 12);
+
+        Store.Save(config);
+
+        Assert.Equal(config, Store.Load().Config);
+    }
+
+    [Fact]
+    public void OldFileWithoutSmartPauseFieldsUsesDefaultsWithoutCountingAsReset()
+    {
+        WriteRaw("{\"workMinutes\": 40, \"breakMinutes\": 6, \"firstRunCompleted\": true, \"theme\": \"Dark\"}");
+
+        var result = Store.Load();
+
+        Assert.Equal(ConfigLoadStatus.Loaded, result.Status);
+        Assert.True(result.Config.SmartPause);
+        Assert.Equal(AppConfig.DefaultIdleMinutes, result.Config.IdleMinutes);
+    }
+
+    [Theory]
+    [InlineData("\"smartPause\": \"no\"")]
+    [InlineData("\"idleMinutes\": 0")]
+    [InlineData("\"idleMinutes\": 31")]
+    [InlineData("\"idleMinutes\": 2.5")]
+    public void InvalidSmartPauseFieldsFallBackAlone(string field)
+    {
+        WriteRaw("{\"workMinutes\": 40, \"breakMinutes\": 6, \"firstRunCompleted\": true, " + field + "}");
+
+        var result = Store.Load();
+
+        Assert.Equal(ConfigLoadStatus.FieldsReset, result.Status);
+        Assert.Equal(new AppConfig(40, 6, true), result.Config);
     }
 
     [Theory]

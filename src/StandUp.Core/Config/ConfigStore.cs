@@ -110,9 +110,13 @@ public sealed class ConfigStore
         var firstRun = ReadBool(root, "firstRunCompleted", false, ref reset);
 
         var theme = ReadTheme(root, ref reset);
+        var smartPause = ReadBool(root, "smartPause", true, ref reset);
+        var idle = ReadMinutes(root, "idleMinutes", AppConfig.DefaultIdleMinutes,
+            AppConfig.IsValidIdleMinutes, ref reset);
 
+        // 舊版的 devMode / dev*Seconds 欄位已移除,出現時當作未知欄位忽略。
         return new(
-            new AppConfig(work, rest, firstRun, theme),
+            new AppConfig(work, rest, firstRun, theme, smartPause, idle),
             reset ? ConfigLoadStatus.FieldsReset : ConfigLoadStatus.Loaded);
     }
 

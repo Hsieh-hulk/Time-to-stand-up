@@ -66,12 +66,15 @@ public sealed class BreakStateMachine
         _ => Math.Clamp(Elapsed(_breakStart) / Settings.BreakDuration, 0, 1),
     };
 
-    /// <summary>依目前時鐘推進狀態。若睡眠後已超過休息時長,一次直接進入 BreakReady。</summary>
-    public void Update()
+    /// <summary>
+    /// 依目前時鐘推進狀態。若睡眠後已超過休息時長,一次直接進入 BreakReady。
+    /// <paramref name="canInterrupt"/> 為 false 時(例如使用者離開座位),工作到點也不進入休息。
+    /// </summary>
+    public void Update(bool canInterrupt = true)
     {
         switch (State)
         {
-            case BreakState.Working when Elapsed(_workStart) >= Settings.WorkInterval:
+            case BreakState.Working when canInterrupt && Elapsed(_workStart) >= Settings.WorkInterval:
                 EnterBreak();
                 break;
             case BreakState.BreakLocked when Elapsed(_breakStart) >= Settings.BreakDuration:
@@ -99,6 +102,29 @@ public sealed class BreakStateMachine
         if (State != BreakState.Working)
             return false;
         Settings = settings;
+        return true;
+    }
+
+    /// <summary>
+    /// 把一段離開(鎖定、睡眠、閒置)的時間排除在工作時間之外:工作起點往後挪。
+    /// 最多排除到「現在」,不會把已累計的工作時間變成負數。只在 Working 狀態有效。
+    /// </summary>
+    public bool ExcludeAway(TimeSpan away)
+    {
+        if (State != BreakState.Working || away <= TimeSpan.Zero)
+            return false;
+        var now = _clock.UtcNow;
+        var shifted = _workStart + away;
+        _workStart = shifted < now ? shifted : now;
+        return true;
+    }
+
+    /// <summary>離開夠久,視為已經休息過:工作計時從現在重新開始。只在 Working 狀態有效。</summary>
+    public bool ResetWork()
+    {
+        if (State != BreakState.Working)
+            return false;
+        _workStart = _clock.UtcNow;
         return true;
     }
 

@@ -74,7 +74,7 @@ internal static class ThemeManager
             merged.Remove(_current);
 
         var name = light ? "Glass.Light" : "Glass.Dark";
-        _current = new ResourceDictionary { Source = new Uri($"/StandUp;component/Themes/{name}.xaml", UriKind.Relative) };
+        _current = new ResourceDictionary { Source = new Uri($"/StandUp;component/Theming/Themes/{name}.xaml", UriKind.Relative) };
         merged.Add(_current);
 
         IsLight = light;

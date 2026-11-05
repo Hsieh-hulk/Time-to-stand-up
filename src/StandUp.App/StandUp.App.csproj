@@ -11,11 +11,22 @@
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\StandUp.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <!-- 發佈設定(build/publish.ps1 使用):內含 .NET 執行環境的單一 exe。WPF 不支援 trim,所以不開。 -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <DebugType>none</DebugType>
   </PropertyGroup>
 
   <ItemGroup>
-    <Resource Include="Fonts\*.ttf" />
-    <None Include="Fonts\LICENSE.txt" />
+    <Resource Include="Assets\Fonts\*.ttf" />
+    <None Include="Assets\Fonts\LICENSE.txt" />
   </ItemGroup>
 
   <ItemGroup>

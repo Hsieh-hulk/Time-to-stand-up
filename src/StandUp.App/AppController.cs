@@ -11,13 +11,21 @@ namespace StandUp.App;
 
 /// <summary>
 /// 把狀態機接到 UI:每秒推進狀態、管理休息畫面(每個螢幕一個)、休息前提示與系統匣。
-/// M2 的系統匣有「立即休息」「設定…」與「結束」,完整系統匣是 M6。
+/// 系統匣有「立即休息」「設定…」與「結束」;更完整的系統匣列在 docs/ROADMAP.md。
 /// </summary>
 internal sealed class AppController : IDisposable
 {
     private const int AnimationFrameMs = 33; // 約 30 fps,動畫的上限
 
+    /// <summary>兩次 tick 間隔超過這個值,視為電腦剛睡醒(備援:睡眠事件偶爾會漏)。</summary>
+    private static readonly TimeSpan SleepGapThreshold = TimeSpan.FromSeconds(10);
+
+    private readonly IClock _clock = new SystemClock();
     private readonly BreakStateMachine _machine;
+    private readonly PresenceTracker _tracker;
+    private readonly CommandLineOptions _options;
+    private PresenceMonitor? _presence;
+    private DateTimeOffset _lastTick;
     private readonly List<BreakOverlayWindow> _overlays = new();
     private readonly DispatcherTimer _tick;
     private readonly DispatcherTimer _frame;
@@ -36,12 +44,16 @@ internal sealed class AppController : IDisposable
 
     /// <param name="settings">這次執行實際使用的設定(設定檔加上命令列覆寫)。</param>
     /// <param name="config">設定檔目前的內容,設定視窗以它為起點。</param>
-    public AppController(BreakSettings settings, AppConfig config, ConfigStore store)
+    /// <param name="options">命令列參數,用來取得這次執行的覆寫值(例如閒置門檻)。</param>
+    public AppController(BreakSettings settings, AppConfig config, ConfigStore store, CommandLineOptions options)
     {
         _config = config;
         _store = store;
-        _machine = new BreakStateMachine(new SystemClock(), settings);
+        _options = options;
+        _machine = new BreakStateMachine(_clock, settings);
         _machine.StateChanged += OnStateChanged;
+        _tracker = new PresenceTracker(_clock, _machine);
+        _tracker.Returned += OnReturned;
 
         _tick = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _tick.Tick += (_, _) => OnTick();
@@ -54,6 +66,9 @@ internal sealed class AppController : IDisposable
     {
         CreateTray();
         SystemEvents.DisplaySettingsChanged += OnDisplaySettingsChanged;
+        _presence = new PresenceMonitor();
+        _presence.AwayChanged += OnAwayChanged;
+        _lastTick = _clock.UtcNow;
         _tick.Start();
     }
 
@@ -62,6 +77,11 @@ internal sealed class AppController : IDisposable
         _tick.Stop();
         _frame.Stop();
         SystemEvents.DisplaySettingsChanged -= OnDisplaySettingsChanged;
+        if (_presence is not null)
+        {
+            _presence.AwayChanged -= OnAwayChanged;
+            _presence.Dispose();
+        }
         CloseSettingsWindow();
         CloseOverlays();
         CloseToast();
@@ -78,12 +98,27 @@ internal sealed class AppController : IDisposable
 
     private void OnTick()
     {
-        _machine.Update();
+        var now = _clock.UtcNow;
+        if (_config.SmartPause)
+        {
+            // 睡眠事件沒處理到(上次回來早於上次 tick),用 tick 間隔補算這段離開。
+            if (now - _lastTick > SleepGapThreshold && _tracker.LastReturnAt < _lastTick)
+                _tracker.ReportGap(_lastTick);
+            UpdateIdle(now);
+        }
+        _lastTick = now;
+
+        // 離開期間不跳出休息畫面:人不在,回來時再由 PresenceTracker 調整工作計時。
+        _machine.Update(canInterrupt: !_tracker.IsAway);
 
         switch (_machine.State)
         {
             case BreakState.Working:
-                UpdateToast();
+                // 人不在時不顯示休息前提示(否則到點後會一直停在 00:00)。
+                if (_tracker.IsAway)
+                    CloseToast();
+                else
+                    UpdateToast();
                 break;
 
             case BreakState.BreakLocked:
@@ -100,6 +135,42 @@ internal sealed class AppController : IDisposable
     }
 
     private void OnFrame() => RefreshOverlays(animated: true);
+
+    private void UpdateIdle(DateTimeOffset now)
+    {
+        var idle = NativeMethods.GetIdleTime();
+        if (idle >= _options.ResolveIdleThreshold(_config))
+            _tracker.SetAway(AwayReason.Idle, true, since: now - idle);
+        else
+            _tracker.SetAway(AwayReason.Idle, false);
+    }
+
+    private void OnAwayChanged(AwayReason reason, bool on, DateTimeOffset at)
+    {
+        if (!_config.SmartPause)
+            return;
+        _tracker.SetAway(reason, on, on ? at : null);
+    }
+
+    /// <summary>關閉智慧暫停時清掉所有離開原因,之後的工作時間照常累計。</summary>
+    private void ClearAway()
+    {
+        _tracker.SetAway(AwayReason.Locked, false);
+        _tracker.SetAway(AwayReason.Suspended, false);
+        _tracker.SetAway(AwayReason.Idle, false);
+    }
+
+    private void OnReturned(TimeSpan away, bool reset)
+    {
+        if (!reset || _tray is null)
+            return;
+        var minutes = Math.Max(1, (int)Math.Round(away.TotalMinutes));
+        _tray.ShowBalloonTip(
+            5000,
+            "StandUp 站起來",
+            $"剛才離開了約 {minutes} 分鐘,已當作休息,重新開始計時。",
+            Forms.ToolTipIcon.Info);
+    }
 
     private void OnStateChanged(BreakState from, BreakState to)
     {
@@ -263,6 +334,8 @@ internal sealed class AppController : IDisposable
             return;
 
         _config = newConfig;
+        if (!newConfig.SmartPause)
+            ClearAway();
         _toastDismissed = false;
         if (!_store.Save(newConfig))
         {
@@ -279,11 +352,11 @@ internal sealed class AppController : IDisposable
         _breakNowItem = new Forms.ToolStripMenuItem("立即休息");
         _breakNowItem.Click += (_, _) => _machine.StartBreakNow();
 
-        // 「設定…」沒有任何保護:SPEC 3.5 尚未定案(M5),定案前和「立即休息」「結束」一樣只在 Working 狀態可用。
+        // 「設定…」沒有密碼等保護(見 docs/ROADMAP.md),和「立即休息」「結束」一樣只在 Working 狀態可用。
         _settingsItem = new Forms.ToolStripMenuItem("設定…");
         _settingsItem.Click += (_, _) => OpenSettings();
 
-        // M1 的測試輔助。「結束」是否需要驗證取決於 SPEC 3.5(尚未定案),定案前只在 Working 狀態可用。
+        // 「結束」不需驗證,只在 Working 狀態可用(休息中不能用它逃避休息)。
         _exitItem = new Forms.ToolStripMenuItem("結束");
         _exitItem.Click += (_, _) =>
         {

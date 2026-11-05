@@ -71,7 +71,26 @@ public class CommandLineOptionsTests
         Assert.Null(options.WorkOverride);
     }
 
+    [Fact]
+    public void IdleOverrideReplacesConfigIdleForThisRun()
+    {
+        var options = CommandLineOptions.Parse(new[] { "--idle", "0.2" });
+
+        Assert.Equal(TimeSpan.FromSeconds(12), options.ResolveIdleThreshold(AppConfig.Default));
+    }
+
+    [Fact]
+    public void NoIdleOverrideUsesConfigIdle()
+    {
+        var options = CommandLineOptions.Parse(Array.Empty<string>());
+
+        Assert.Null(options.IdleOverride);
+        Assert.Equal(TimeSpan.FromMinutes(7), options.ResolveIdleThreshold(AppConfig.Default with { IdleMinutes = 7 }));
+    }
+
     [Theory]
+    [InlineData("--idle")]
+    [InlineData("--idle", "0")]
     [InlineData("--work")]
     [InlineData("--work", "abc")]
     [InlineData("--break", "0")]

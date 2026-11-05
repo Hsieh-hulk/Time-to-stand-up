@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Windows;
 using StandUp.Core;
 
@@ -8,7 +9,11 @@ public partial class App : Application
 {
     private const string AppTitle = "StandUp 站起來";
 
+    /// <summary>單一執行個體用的具名 Mutex(同一個 Windows 登入工作階段內)。</summary>
+    internal const string SingleInstanceMutexName = "StandUp.SingleInstance";
+
     private AppController? _controller;
+    private Mutex? _singleInstance;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -23,11 +28,24 @@ public partial class App : Application
         catch (ArgumentException ex)
         {
             MessageBox.Show(
-                ex.Message + "\n\n用法:StandUp.exe [--work 分鐘] [--break 分鐘] [--config-dir 資料夾]",
+                ex.Message + "\n\n用法:StandUp.exe [--work 分鐘] [--break 分鐘] [--idle 分鐘] [--config-dir 資料夾]",
                 AppTitle,
                 MessageBoxButton.OK,
                 MessageBoxImage.Warning);
             Shutdown(1);
+            return;
+        }
+
+        // 開機自動啟動後,使用者又從開始功能表點一次時,不要跑出第二份(兩個系統匣、兩套休息畫面)。
+        // 用 --config-dir 的測試執行不受限制,才能和已安裝的版本並存。
+        if (options.ConfigDirectory is null && !TryAcquireSingleInstance())
+        {
+            MessageBox.Show(
+                "StandUp 已經在執行中。\n請從工作列右下角系統匣的「站」圖示按右鍵開啟設定。",
+                AppTitle,
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+            Shutdown();
             return;
         }
 
@@ -67,13 +85,31 @@ public partial class App : Application
             }
         }
 
-        _controller = new AppController(options.ResolveSettings(config), config, store);
+        _controller = new AppController(options.ResolveSettings(config), config, store, options);
         _controller.Start();
     }
 
     protected override void OnExit(ExitEventArgs e)
     {
         _controller?.Dispose();
+        if (_singleInstance is not null)
+        {
+            _singleInstance.ReleaseMutex();
+            _singleInstance.Dispose();
+        }
         base.OnExit(e);
+    }
+
+    private bool TryAcquireSingleInstance()
+    {
+        var mutex = new Mutex(initiallyOwned: true, SingleInstanceMutexName, out var createdNew);
+        if (!createdNew)
+        {
+            mutex.Dispose();
+            return false;
+        }
+
+        _singleInstance = mutex;
+        return true;
     }
 }
