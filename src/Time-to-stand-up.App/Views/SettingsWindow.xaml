@@ -35,6 +35,10 @@
             </StackPanel>
         </TabItem>
 
+        <TabItem Header="例&#x200A;外&#x200A;程&#x200A;式" Padding="14,6">
+            <local:ProcessListEditor x:Name="ProcessEditor" Margin="18" />
+        </TabItem>
+
         <TabItem Header="研&#x200A;究&#x200A;依&#x200A;據&#x200A;與&#x200A;關&#x200A;於" Padding="14,6">
             <local:ResearchInfoPanel Margin="18" />
         </TabItem>

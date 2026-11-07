@@ -20,9 +20,17 @@ internal sealed class AppController : IDisposable
     /// <summary>兩次 tick 間隔超過這個值,視為電腦剛睡醒(備援:睡眠事件偶爾會漏)。</summary>
     private static readonly TimeSpan SleepGapThreshold = TimeSpan.FromSeconds(10);
 
+    /// <summary>每隔幾個 tick 列舉一次行程(只在例外程式清單非空且工作中時)。</summary>
+    private const int ProcessPollTicks = 2;
+
+    private const string TrayTitle = "Time-to-stand-up";
+
     private readonly IClock _clock = new SystemClock();
     private readonly BreakStateMachine _machine;
     private readonly PresenceTracker _tracker;
+    private readonly ProcessPauseGate _gate;
+    private string? _pausedBy;
+    private int _processPollCountdown;
     private PresenceMonitor? _presence;
     private DateTimeOffset _lastTick;
     private readonly List<BreakOverlayWindow> _overlays = new();
@@ -51,6 +59,8 @@ internal sealed class AppController : IDisposable
         _machine.StateChanged += OnStateChanged;
         _tracker = new PresenceTracker(_clock, _machine);
         _tracker.Returned += OnReturned;
+        _gate = new ProcessPauseGate(_machine);
+        _gate.PausedChanged += _ => UpdateTrayText();
 
         _tick = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _tick.Tick += (_, _) => OnTick();
@@ -106,14 +116,17 @@ internal sealed class AppController : IDisposable
         }
         _lastTick = now;
 
+        // 例外程式執行中:工作計時持續重設,不會到點。
+        UpdateProcessPause();
+
         // 離開期間不跳出休息畫面:人不在,回來時再由 PresenceTracker 調整工作計時。
-        _machine.Update(canInterrupt: !_tracker.IsAway);
+        _machine.Update(canInterrupt: !_tracker.IsAway && !_gate.IsPaused);
 
         switch (_machine.State)
         {
             case BreakState.Working:
-                // 人不在時不顯示休息前提示(否則到點後會一直停在 00:00)。
-                if (_tracker.IsAway)
+                // 人不在時不顯示休息前提示(否則到點後會一直停在 00:00);例外程式執行中也不顯示。
+                if (_tracker.IsAway || _gate.IsPaused)
                     CloseToast();
                 else
                     UpdateToast();
@@ -133,6 +146,46 @@ internal sealed class AppController : IDisposable
     }
 
     private void OnFrame() => RefreshOverlays(animated: true);
+
+    /// <summary>
+    /// 每 <see cref="ProcessPollTicks"/> 秒列舉一次行程,其餘 tick 沿用上次結果。
+    /// 清單為空或不在工作狀態時完全不列舉,不增加耗電。
+    /// </summary>
+    private void UpdateProcessPause()
+    {
+        var watched = _config.PauseProcesses;
+        if (watched.Count == 0 || _machine.State != BreakState.Working)
+        {
+            _processPollCountdown = 0;
+            SetPausedBy(null);
+        }
+        else if (--_processPollCountdown <= 0)
+        {
+            _processPollCountdown = ProcessPollTicks;
+            SetPausedBy(ProcessWatchList.FindRunning(watched, RunningProcesses.GetNames()));
+        }
+
+        _gate.Update(_pausedBy is not null);
+    }
+
+    private void SetPausedBy(string? name)
+    {
+        if (name == _pausedBy)
+            return;
+        _pausedBy = name;
+        UpdateTrayText();
+    }
+
+    /// <summary>系統匣提示文字;暫停中顯示是哪個程式。NotifyIcon.Text 最多 63 個字元。</summary>
+    private void UpdateTrayText()
+    {
+        if (_tray is null)
+            return;
+        var text = _gate.IsPaused && _pausedBy is not null
+            ? $"{TrayTitle}(暫停中:{_pausedBy})"
+            : TrayTitle;
+        _tray.Text = text.Length <= 63 ? text : text[..62] + "…";
+    }
 
     private void OnAwayChanged(AwayReason reason, bool on, DateTimeOffset at)
     {
@@ -334,6 +387,8 @@ internal sealed class AppController : IDisposable
             return;
 
         _config = newConfig;
+        // 例外程式清單可能變了:下一個 tick 立刻重新列舉。
+        _processPollCountdown = 0;
         if (!newConfig.SmartPause)
             ClearAway();
         _toastDismissed = false;

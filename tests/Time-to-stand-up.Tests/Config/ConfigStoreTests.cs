@@ -84,8 +84,85 @@ public sealed class ConfigStoreTests : IDisposable
         var names = document.RootElement.EnumerateObject().Select(p => p.Name).ToArray();
 
         Assert.Equal(
-            new[] { "workMinutes", "breakMinutes", "firstRunCompleted", "theme", "smartPause" },
+            new[] { "workMinutes", "breakMinutes", "firstRunCompleted", "theme", "smartPause", "pauseProcesses" },
             names);
+    }
+
+    [Fact]
+    public void PauseProcessesRoundTrip()
+    {
+        var config = new AppConfig(30, 5, true) { PauseProcesses = new[] { "powerpnt", "zoom" } };
+
+        Assert.True(Store.Save(config));
+        var result = Store.Load();
+
+        Assert.Equal(ConfigLoadStatus.Loaded, result.Status);
+        Assert.Equal(config, result.Config);
+        Assert.Equal(new[] { "powerpnt", "zoom" }, result.Config.PauseProcesses);
+    }
+
+    [Fact]
+    public void OldFileWithoutPauseProcessesGivesEmptyListWithoutCountingAsReset()
+    {
+        WriteRaw("{\"workMinutes\": 40, \"breakMinutes\": 6, \"firstRunCompleted\": true, \"smartPause\": true}");
+
+        var result = Store.Load();
+
+        Assert.Equal(ConfigLoadStatus.Loaded, result.Status);
+        Assert.Empty(result.Config.PauseProcesses);
+    }
+
+    [Fact]
+    public void PauseProcessesAreNormalizedAndDuplicatesMergedWithoutCountingAsReset()
+    {
+        WriteRaw("{\"workMinutes\": 40, \"breakMinutes\": 6, \"firstRunCompleted\": true, "
+            + "\"pauseProcesses\": [\"C:\\\\Office\\\\POWERPNT.EXE\", \"powerpnt\", \"Zoom.exe\"]}");
+
+        var result = Store.Load();
+
+        Assert.Equal(ConfigLoadStatus.Loaded, result.Status);
+        Assert.Equal(new[] { "powerpnt", "zoom" }, result.Config.PauseProcesses);
+    }
+
+    [Theory]
+    [InlineData("\"notepad\"")]
+    [InlineData("{\"a\": 1}")]
+    [InlineData("[\"notepad\", 3]")]
+    [InlineData("[null]")]
+    public void WrongTypedPauseProcessesFallBackToEmptyAlone(string json)
+    {
+        WriteRaw("{\"workMinutes\": 40, \"breakMinutes\": 6, \"firstRunCompleted\": true, \"pauseProcesses\": " + json + "}");
+
+        var result = Store.Load();
+
+        Assert.Equal(ConfigLoadStatus.FieldsReset, result.Status);
+        Assert.Equal(new AppConfig(40, 6, true), result.Config);
+    }
+
+    [Fact]
+    public void InvalidPauseProcessNamesAreDroppedAndOthersKept()
+    {
+        WriteRaw("{\"workMinutes\": 40, \"breakMinutes\": 6, \"firstRunCompleted\": true, "
+            + "\"pauseProcesses\": [\"\", \"bad|name\", \"teams\"]}");
+
+        var result = Store.Load();
+
+        Assert.Equal(ConfigLoadStatus.FieldsReset, result.Status);
+        Assert.Equal(new[] { "teams" }, result.Config.PauseProcesses);
+    }
+
+    [Fact]
+    public void PauseProcessesBeyondTheLimitAreTruncated()
+    {
+        var names = Enumerable.Range(0, ProcessWatchList.MaxEntries + 5).Select(i => $"\"app{i}\"");
+        WriteRaw("{\"workMinutes\": 40, \"breakMinutes\": 6, \"firstRunCompleted\": true, "
+            + "\"pauseProcesses\": [" + string.Join(", ", names) + "]}");
+
+        var result = Store.Load();
+
+        Assert.Equal(ConfigLoadStatus.FieldsReset, result.Status);
+        Assert.Equal(ProcessWatchList.MaxEntries, result.Config.PauseProcesses.Count);
+        Assert.Equal("app0", result.Config.PauseProcesses[0]);
     }
 
     [Fact]

@@ -1,0 +1,60 @@
+<Window x:Class="TimeToStandUp.App.RunningProcessPickerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="從執行中的程式挑選"
+        Width="480" Height="520"
+        MinWidth="380" MinHeight="360"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        FontFamily="{StaticResource AppFontFamily}"
+        FontSize="14"
+        Foreground="{DynamicResource Glass.TextBrush}">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Theming/Themes/Glass.Styles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+    <DockPanel Margin="18">
+        <TextBlock DockPanel.Dock="Top" TextWrapping="Wrap" FontSize="12" Margin="0,0,0,10"
+                   Foreground="{DynamicResource Glass.SubTextBrush}"
+                   Text="只列出有視窗的程式,可按住 Ctrl 多選。沒有視窗的背景程式請回上一頁手動輸入名稱。" />
+
+        <DockPanel DockPanel.Dock="Bottom" LastChildFill="False" Margin="0,12,0,0">
+            <Button x:Name="RefreshButton" DockPanel.Dock="Left" Content="重新整理" Padding="14,5"
+                    Click="OnRefreshClick" />
+            <Button x:Name="AddButton" DockPanel.Dock="Right" Content="加&#x200A;入" Padding="22,5"
+                    IsDefault="True" IsEnabled="False" Click="OnAddClick" />
+            <Button DockPanel.Dock="Right" Content="取&#x200A;消" Padding="22,5" Margin="0,0,10,0"
+                    IsCancel="True" />
+        </DockPanel>
+
+        <Grid>
+            <ListBox x:Name="CandidateList" SelectionMode="Extended"
+                     AutomationProperties.Name="執行中的程式"
+                     SelectionChanged="OnSelectionChanged" MouseDoubleClick="OnListDoubleClick">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel AutomationProperties.Name="{Binding Name}">
+                            <TextBlock FontWeight="Medium">
+                                <Run Text="{Binding Name, Mode=OneWay}" />
+                                <Run x:Name="AddedMark" Text="" Foreground="{DynamicResource Glass.SubTextBrush}" FontWeight="Normal" />
+                            </TextBlock>
+                            <TextBlock Text="{Binding WindowTitle}" FontSize="12" TextTrimming="CharacterEllipsis"
+                                       Foreground="{DynamicResource Glass.SubTextBrush}" />
+                        </StackPanel>
+                        <DataTemplate.Triggers>
+                            <DataTrigger Binding="{Binding AlreadyAdded}" Value="True">
+                                <Setter TargetName="AddedMark" Property="Text" Value="  已在清單中" />
+                            </DataTrigger>
+                        </DataTemplate.Triggers>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+            <TextBlock x:Name="EmptyHint" Text="找不到有視窗的程式" IsHitTestVisible="False" Visibility="Collapsed"
+                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                       Foreground="{DynamicResource Glass.SubTextBrush}" />
+        </Grid>
+    </DockPanel>
+</Window>

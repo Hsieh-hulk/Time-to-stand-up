@@ -27,6 +27,36 @@ public sealed record AppConfig(
 {
     // 測試時要縮短時間,用命令列 --work / --break(可為小數分鐘),不寫回設定檔。
 
+    /// <summary>
+    /// 例外程式:清單中任一程式執行時暫停計時、不進入休息,全部關閉後從頭計時(見 <see cref="ProcessPauseGate"/>)。
+    /// 內容是 <see cref="ProcessWatchList.Normalize"/> 過的名稱。排在 JSON 最後,舊版設定檔沒有這個欄位時視為空清單。
+    /// </summary>
+    [JsonPropertyOrder(1)]
+    public IReadOnlyList<string> PauseProcesses { get; init; } = Array.Empty<string>();
+
+    // record 預設用參考比較清單;改成逐項比較,讓「存檔再讀回」仍然相等。
+    public bool Equals(AppConfig? other) =>
+        other is not null
+        && WorkMinutes == other.WorkMinutes
+        && BreakMinutes == other.BreakMinutes
+        && FirstRunCompleted == other.FirstRunCompleted
+        && Theme == other.Theme
+        && SmartPause == other.SmartPause
+        && PauseProcesses.SequenceEqual(other.PauseProcesses, StringComparer.Ordinal);
+
+    public override int GetHashCode()
+    {
+        var hash = new HashCode();
+        hash.Add(WorkMinutes);
+        hash.Add(BreakMinutes);
+        hash.Add(FirstRunCompleted);
+        hash.Add(Theme);
+        hash.Add(SmartPause);
+        foreach (var name in PauseProcesses)
+            hash.Add(name, StringComparer.Ordinal);
+        return hash.ToHashCode();
+    }
+
     [JsonIgnore]
     public TimeSpan EffectiveWorkInterval => TimeSpan.FromMinutes(WorkMinutes);
 

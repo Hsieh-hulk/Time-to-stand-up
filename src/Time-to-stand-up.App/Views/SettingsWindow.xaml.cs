@@ -5,7 +5,7 @@ using TimeToStandUp.Core;
 namespace TimeToStandUp.App;
 
 /// <summary>
-/// 設定視窗:提醒節奏、開機自動啟動、主題。沒有密碼等保護機制(見 docs/ROADMAP.md)。
+/// 設定視窗:提醒節奏、開機自動啟動、例外程式、主題。沒有密碼等保護機制(見 docs/ROADMAP.md)。
 /// 休息一開始,呼叫端會用 <see cref="CloseWithoutSaving"/> 關掉它並丟棄未儲存的修改。
 /// </summary>
 public partial class SettingsWindow : Window
@@ -38,6 +38,7 @@ public partial class SettingsWindow : Window
 
         ApplyHint.Text = "儲存後立即生效,已累計的工作時間會保留。";
         Picker.SetValues(current.WorkMinutes, current.BreakMinutes);
+        ProcessEditor.SetItems(current.PauseProcesses);
         Picker.SelectionChanged += (_, _) => UpdateSaveEnabled();
         UpdateSaveEnabled();
     }
@@ -82,6 +83,7 @@ public partial class SettingsWindow : Window
             WorkMinutes = Picker.WorkMinutes,
             BreakMinutes = Picker.BreakMinutes,
             Theme = _theme,
+            PauseProcesses = ProcessEditor.Items,
         });
         Close();
     }

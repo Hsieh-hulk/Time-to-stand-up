@@ -111,11 +111,33 @@ public sealed class ConfigStore
 
         var theme = ReadTheme(root, ref reset);
         var smartPause = ReadBool(root, "smartPause", true, ref reset);
+        var pauseProcesses = ReadProcessList(root, "pauseProcesses", ref reset);
 
         // 舊版的 devMode / dev*Seconds / idleMinutes 欄位已移除,出現時當作未知欄位忽略。
         return new(
-            new AppConfig(work, rest, firstRun, theme, smartPause),
+            new AppConfig(work, rest, firstRun, theme, smartPause) { PauseProcesses = pauseProcesses },
             reset ? ConfigLoadStatus.FieldsReset : ConfigLoadStatus.Loaded);
+    }
+
+    // 不存在 → 空清單(不算重設)。不是陣列或含非字串元素 → 整個欄位回到空清單。
+    // 個別名稱不合法或超過上限 → 只丟掉那些名稱。兩種情況都算被重設;重複名稱只是合併,不算。
+    private static IReadOnlyList<string> ReadProcessList(JsonElement root, string name, ref bool reset)
+    {
+        if (!TryFind(root, name, out var element))
+            return Array.Empty<string>();
+
+        if (element.ValueKind != JsonValueKind.Array
+            || element.EnumerateArray().Any(item => item.ValueKind != JsonValueKind.String))
+        {
+            reset = true;
+            return Array.Empty<string>();
+        }
+
+        var list = ProcessWatchList.NormalizeAll(
+            element.EnumerateArray().Select(item => item.GetString()), out var dropped);
+        if (dropped)
+            reset = true;
+        return list;
     }
 
     // 舊版設定檔沒有 theme 欄位,視為跟隨系統;有欄位但不是已知的名稱才算被重設。

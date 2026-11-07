@@ -20,6 +20,28 @@ public class AppConfigTests
         Assert.Equal(30, AppConfig.Default.WorkMinutes);
         Assert.Equal(5, AppConfig.Default.BreakMinutes);
         Assert.False(AppConfig.Default.FirstRunCompleted);
+        Assert.Empty(AppConfig.Default.PauseProcesses);
+    }
+
+    [Fact]
+    public void EqualityComparesPauseProcessesByContent()
+    {
+        var a = new AppConfig(30, 5, true) { PauseProcesses = new[] { "zoom", "teams" } };
+        var b = new AppConfig(30, 5, true) { PauseProcesses = new List<string> { "zoom", "teams" } };
+        var c = new AppConfig(30, 5, true) { PauseProcesses = new[] { "teams", "zoom" } };
+
+        Assert.Equal(a, b);
+        Assert.Equal(a.GetHashCode(), b.GetHashCode());
+        Assert.NotEqual(a, c);
+        Assert.NotEqual(a, new AppConfig(30, 5, true));
+    }
+
+    [Fact]
+    public void WithKeepsPauseProcesses()
+    {
+        var config = new AppConfig(30, 5, true) { PauseProcesses = new[] { "zoom" } };
+
+        Assert.Equal(new[] { "zoom" }, (config with { WorkMinutes = 45 }).PauseProcesses);
     }
 
     [Theory]
