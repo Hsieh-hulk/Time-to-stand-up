@@ -22,6 +22,29 @@ public partial class WarningToastWindow : Window
     /// <summary>使用者點擊提示將它關閉。</summary>
     public event Action? Dismissed;
 
+    /// <summary>使用者按下延後,參數為延後時間。</summary>
+    public event Action<TimeSpan>? SnoozeRequested;
+
+    /// <summary>使用者按下「略過這次」。</summary>
+    public event Action? SkipRequested;
+
+    /// <summary>額度用完時隱藏延後/略過按鈕。</summary>
+    public void SetSnoozesRemaining(int remaining)
+    {
+        SnoozePanel.Visibility = remaining > 0 ? Visibility.Visible : Visibility.Collapsed;
+        QuotaText.Text = remaining > 0
+            ? $"本輪還可以延後或略過 {remaining} 次"
+            : "本輪已無法再延後,該起來動一動了";
+    }
+
+    private void OnSnoozeClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: string tag } && int.TryParse(tag, out var minutes))
+            SnoozeRequested?.Invoke(TimeSpan.FromMinutes(minutes));
+    }
+
+    private void OnSkipClick(object sender, RoutedEventArgs e) => SkipRequested?.Invoke();
+
     public void SetRemaining(TimeSpan remaining)
     {
         var totalSeconds = Math.Max((int)Math.Ceiling(remaining.TotalSeconds), 0);

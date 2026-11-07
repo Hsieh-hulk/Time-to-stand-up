@@ -271,11 +271,23 @@ internal sealed class AppController : IDisposable
                 _toastDismissed = true;
                 CloseToast();
             };
+            _toast.SnoozeRequested += delay =>
+            {
+                if (_machine.Snooze(delay))
+                    CloseToast();
+            };
+            _toast.SkipRequested += () =>
+            {
+                if (_machine.SkipBreak())
+                    CloseToast();
+            };
             _toast.SetRemaining(_machine.WorkRemaining);
+            _toast.SetSnoozesRemaining(_machine.SnoozesRemaining);
             _toast.Show();
         }
 
         _toast.SetRemaining(_machine.WorkRemaining);
+        _toast.SetSnoozesRemaining(_machine.SnoozesRemaining);
     }
 
     private void CloseToast()

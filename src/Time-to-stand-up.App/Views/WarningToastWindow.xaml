@@ -12,14 +12,53 @@
         SizeToContent="WidthAndHeight"
         WindowStartupLocation="Manual"
         FontFamily="{StaticResource AppFontFamily}">
+    <Window.Resources>
+        <!-- 提示固定深色底,不跟主題切換,所以按鈕也用本地樣式。 -->
+        <Style x:Key="ToastButton" TargetType="Button">
+            <Setter Property="Foreground" Value="#FFE8EEF4" />
+            <Setter Property="Background" Value="#FF2A3B4B" />
+            <Setter Property="BorderBrush" Value="#FF3B5266" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Padding" Value="10,5" />
+            <Setter Property="Margin" Value="0,0,8,0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1"
+                                CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#FF3A5068" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#FF22303D" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
     <Border Background="#F01B2733"
             BorderBrush="#FF3B5266" BorderThickness="1"
-            CornerRadius="10" Padding="20,14"
-            Cursor="Hand"
-            MouseLeftButtonUp="OnClick">
+            CornerRadius="10" Padding="20,14">
         <StackPanel>
             <TextBlock x:Name="MessageText" FontSize="16" FontWeight="Medium" Foreground="#FFE8EEF4" />
-            <TextBlock Text="點一下可關閉這則提示" Margin="0,4,0,0" FontSize="12" Foreground="#FF9FB3C4" />
+            <StackPanel x:Name="SnoozePanel" Orientation="Horizontal" Margin="0,10,0,0">
+                <Button Style="{StaticResource ToastButton}" Content="延後 5 分" Tag="5" Click="OnSnoozeClick" />
+                <Button Style="{StaticResource ToastButton}" Content="延後 10 分" Tag="10" Click="OnSnoozeClick" />
+                <Button Style="{StaticResource ToastButton}" Content="延後 15 分" Tag="15" Click="OnSnoozeClick" />
+                <Button Style="{StaticResource ToastButton}" Content="略過這次" Margin="0" Click="OnSkipClick" />
+            </StackPanel>
+            <TextBlock x:Name="QuotaText" Margin="0,8,0,0" FontSize="12" Foreground="#FF9FB3C4" />
+            <TextBlock Text="關閉提示" Margin="0,6,0,0" FontSize="12" Foreground="#FF9FB3C4"
+                       TextDecorations="Underline" Cursor="Hand" HorizontalAlignment="Left"
+                       MouseLeftButtonUp="OnClick" />
         </StackPanel>
     </Border>
 </Window>

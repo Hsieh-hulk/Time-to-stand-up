@@ -5,6 +5,13 @@ public sealed class BreakSettings
 {
     public static readonly TimeSpan MaxWarningLead = TimeSpan.FromMinutes(1);
 
+    /// <summary>每個工作週期最多可延後或略過幾次(兩者共用額度)。</summary>
+    public const int MaxSnoozesPerCycle = 2;
+
+    /// <summary>休息前提示上提供的延後選項。</summary>
+    public static readonly IReadOnlyList<TimeSpan> SnoozeOptions =
+        new[] { TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(15) };
+
     public BreakSettings(TimeSpan workInterval, TimeSpan breakDuration)
     {
         if (workInterval <= TimeSpan.Zero)

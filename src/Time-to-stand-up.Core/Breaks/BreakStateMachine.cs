@@ -21,6 +21,7 @@ public sealed class BreakStateMachine
     private readonly IClock _clock;
     private DateTimeOffset _workStart;
     private DateTimeOffset _breakStart;
+    private int _snoozesUsed;
 
     public BreakStateMachine(IClock clock, BreakSettings settings)
     {
@@ -125,6 +126,33 @@ public sealed class BreakStateMachine
         if (State != BreakState.Working)
             return false;
         _workStart = _clock.UtcNow;
+        _snoozesUsed = 0;
+        return true;
+    }
+
+    /// <summary>這個工作週期還剩幾次延後/略過額度。</summary>
+    public int SnoozesRemaining => Math.Max(BreakSettings.MaxSnoozesPerCycle - _snoozesUsed, 0);
+
+    /// <summary>目前是否可以延後或略過(Working 且還有額度)。</summary>
+    public bool CanSnooze => State == BreakState.Working && SnoozesRemaining > 0;
+
+    /// <summary>把這次休息往後延 <paramref name="delay"/>。扣一次額度;休息鎖定後不能用。</summary>
+    public bool Snooze(TimeSpan delay)
+    {
+        if (!CanSnooze || delay <= TimeSpan.Zero)
+            return false;
+        _workStart += delay;
+        _snoozesUsed++;
+        return true;
+    }
+
+    /// <summary>略過這次休息:工作計時從現在重新開始。扣一次額度,且不會歸零額度。</summary>
+    public bool SkipBreak()
+    {
+        if (!CanSnooze)
+            return false;
+        _workStart = _clock.UtcNow;
+        _snoozesUsed++;
         return true;
     }
 
@@ -138,6 +166,7 @@ public sealed class BreakStateMachine
         if (State != BreakState.BreakReady)
             return false;
         _workStart = _clock.UtcNow;
+        _snoozesUsed = 0;
         Transition(BreakState.Working);
         return true;
     }
