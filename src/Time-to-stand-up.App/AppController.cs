@@ -379,6 +379,13 @@ internal sealed class AppController : IDisposable
             Visible = true,
         };
 
+        // 左鍵單擊直接開設定(和選單的「設定…」同一條路徑,休息中 OpenSettings 會自己擋掉)。
+        _tray.MouseClick += (_, e) =>
+        {
+            if (e.Button == Forms.MouseButtons.Left)
+                OpenSettings();
+        };
+
         UpdateTrayState();
     }
 
