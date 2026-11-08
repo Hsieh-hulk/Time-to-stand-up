@@ -19,7 +19,7 @@ public partial class WarningToastWindow : Window
         SizeChanged += (_, _) => Reposition();
     }
 
-    /// <summary>使用者點擊提示將它關閉。</summary>
+    /// <summary>使用者點擊提示的空白處(或「關閉提示」)將它關閉。</summary>
     public event Action? Dismissed;
 
     /// <summary>使用者按下延後,參數為延後時間。</summary>

@@ -44,9 +44,11 @@
             </Setter>
         </Style>
     </Window.Resources>
+    <!-- 點擊提示上的任何空白處即關閉;按鈕會自行處理(標記 Handled),不會冒泡到這裡。 -->
     <Border Background="#F01B2733"
             BorderBrush="#FF3B5266" BorderThickness="1"
-            CornerRadius="10" Padding="20,14">
+            CornerRadius="10" Padding="20,14"
+            Cursor="Hand" MouseLeftButtonUp="OnClick">
         <StackPanel>
             <TextBlock x:Name="MessageText" FontSize="16" FontWeight="Medium" Foreground="#FFE8EEF4" />
             <StackPanel x:Name="SnoozePanel" Orientation="Horizontal" Margin="0,10,0,0">
@@ -57,8 +59,7 @@
             </StackPanel>
             <TextBlock x:Name="QuotaText" Margin="0,8,0,0" FontSize="12" Foreground="#FF9FB3C4" />
             <TextBlock Text="關閉提示" Margin="0,6,0,0" FontSize="12" Foreground="#FF9FB3C4"
-                       TextDecorations="Underline" Cursor="Hand" HorizontalAlignment="Left"
-                       MouseLeftButtonUp="OnClick" />
+                       TextDecorations="Underline" HorizontalAlignment="Left" />
         </StackPanel>
     </Border>
 </Window>
