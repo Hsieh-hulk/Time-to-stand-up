@@ -35,7 +35,7 @@ foreach ($size in $sizes) {
     # Fit the figure into the canvas (transparent background), shrinking in halving steps.
     # Small frames (tray) fill the full height and get a white halo so they stay visible on dark taskbars.
     $small = $size -le 48
-    $halo = if ($size -le 32) { 1 } else { 2 }
+    $halo = 1
     $h = if ($small) { $size - 2 * $halo } else { [int][Math]::Round($size * 0.94) }
     $w = [int][Math]::Round($h * $src.Width / $src.Height)
     $cur = $src
