@@ -16,7 +16,7 @@
 
 - .NET SDK 8 以上。
 - Inno Setup 6:`winget install JRSoftware.InnoSetup`。腳本會在 PATH、`%LocalAppData%\Programs\Inno Setup 6`、`Program Files (x86)\Inno Setup 6` 找 `ISCC.exe`。
-- (選用)繁體中文安裝精靈:把 Inno Setup 的非官方翻譯檔 `ChineseTraditional.isl` 放到 `installer\Languages\`。檔案存在時,安裝精靈在繁中 Windows 上會顯示繁體中文;不存在則只有英文。
+- 繁體中文安裝精靈:翻譯檔 `installer\Languages\ChineseTraditional.isl`(取自 Inno Setup 官方 repo)已放在專案內,繁中 Windows 上安裝精靈會顯示繁體中文;若檔案被移除則只有英文。
 
 ## 安裝程式行為(installer/Time-to-stand-up.iss)
 
