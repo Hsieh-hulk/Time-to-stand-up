@@ -47,8 +47,10 @@ WizardStyle=modern
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 MinVersion=10.0
-ShowLanguageDialog=auto
-LanguageDetectionMethod=uilanguage
+; Always ask: many zh-TW users run an English Windows UI, so auto-detection picked English.
+; Preselect by regional format (locale) rather than the display language.
+ShowLanguageDialog=yes
+LanguageDetectionMethod=locale
 
 [Languages]
 #if HasZhTw
