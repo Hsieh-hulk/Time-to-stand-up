@@ -33,7 +33,9 @@ function Resize-Smooth([System.Drawing.Image]$img, [int]$w, [int]$h) {
 
 foreach ($size in $sizes) {
     # Fit the figure into the canvas (transparent background), shrinking in halving steps.
-    $h = [int][Math]::Round($size * 0.94)
+    # Small frames (tray) fill the full height and get a white halo so they stay visible on dark taskbars.
+    $small = $size -le 48
+    $h = if ($small) { $size } else { [int][Math]::Round($size * 0.94) }
     $w = [int][Math]::Round($h * $src.Width / $src.Height)
     $cur = $src
     while ($cur.Height / 2 -gt $h) {
@@ -50,6 +52,20 @@ foreach ($size in $sizes) {
     $g.CompositingMode = [System.Drawing.Drawing2D.CompositingMode]::SourceOver
     $tint = New-Object System.Drawing.Imaging.ImageAttributes
     $destRect = New-Object System.Drawing.Rectangle ([int][Math]::Floor(($size - $w) / 2)), ([int][Math]::Floor(($size - $h) / 2)), $w, $h
+    if ($small) {
+        $white = New-Object System.Drawing.Imaging.ImageAttributes
+        $cm = New-Object System.Drawing.Imaging.ColorMatrix
+        $cm.Matrix00 = 0; $cm.Matrix11 = 0; $cm.Matrix22 = 0; $cm.Matrix33 = 1
+        $cm.Matrix40 = 1; $cm.Matrix41 = 1; $cm.Matrix42 = 1
+        $white.SetColorMatrix($cm)
+        $r = if ($size -le 32) { 1 } else { 2 }
+        foreach ($dx in -$r..$r) { foreach ($dy in -$r..$r) {
+            if ($dx -eq 0 -and $dy -eq 0) { continue }
+            $rc = New-Object System.Drawing.Rectangle ($destRect.X + $dx), ($destRect.Y + $dy), $w, $h
+            $g.DrawImage($fig, $rc, 0, 0, $fig.Width, $fig.Height, [System.Drawing.GraphicsUnit]::Pixel, $white)
+        } }
+        $white.Dispose()
+    }
     $g.DrawImage($fig, $destRect, 0, 0, $fig.Width, $fig.Height, [System.Drawing.GraphicsUnit]::Pixel, $tint)
     $tint.Dispose()
     $g.Dispose(); $fig.Dispose()
