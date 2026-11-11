@@ -35,7 +35,8 @@ foreach ($size in $sizes) {
     # Fit the figure into the canvas (transparent background), shrinking in halving steps.
     # Small frames (tray) fill the full height and get a white halo so they stay visible on dark taskbars.
     $small = $size -le 48
-    $h = if ($small) { $size } else { [int][Math]::Round($size * 0.94) }
+    $halo = if ($size -le 32) { 1 } else { 2 }
+    $h = if ($small) { $size - 2 * $halo } else { [int][Math]::Round($size * 0.94) }
     $w = [int][Math]::Round($h * $src.Width / $src.Height)
     $cur = $src
     while ($cur.Height / 2 -gt $h) {
@@ -58,7 +59,7 @@ foreach ($size in $sizes) {
         $cm.Matrix00 = 0; $cm.Matrix11 = 0; $cm.Matrix22 = 0; $cm.Matrix33 = 1
         $cm.Matrix40 = 1; $cm.Matrix41 = 1; $cm.Matrix42 = 1
         $white.SetColorMatrix($cm)
-        $r = if ($size -le 32) { 1 } else { 2 }
+        $r = $halo
         foreach ($dx in -$r..$r) { foreach ($dy in -$r..$r) {
             if ($dx -eq 0 -and $dy -eq 0) { continue }
             $rc = New-Object System.Drawing.Rectangle ($destRect.X + $dx), ($destRect.Y + $dy), $w, $h
