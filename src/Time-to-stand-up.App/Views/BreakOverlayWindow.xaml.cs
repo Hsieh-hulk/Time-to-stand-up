@@ -25,7 +25,13 @@ public partial class BreakOverlayWindow : Window
     private bool _allowClose;
     private bool _readyShown;
 
-    public BreakOverlayWindow(BreakStateMachine machine, bool isPrimary, System.Drawing.Rectangle physicalBounds)
+    private readonly BreakAnimationLayer? _animation;
+
+    public BreakOverlayWindow(
+        BreakStateMachine machine,
+        bool isPrimary,
+        System.Drawing.Rectangle physicalBounds,
+        BreakAnimation animation = BreakAnimation.None)
     {
         InitializeComponent();
         _machine = machine;
@@ -35,6 +41,11 @@ public partial class BreakOverlayWindow : Window
         DisclaimerText.Text = HealthCopy.OverlayDisclaimer;
         Hourglass.Visibility = isPrimary ? Visibility.Visible : Visibility.Collapsed;
         DisclaimerText.Visibility = isPrimary ? Visibility.Visible : Visibility.Collapsed;
+        // 每個螢幕各建一份動畫(各自一個視覺元素),主、副螢幕都顯示。
+        _animation = BreakAnimations.Create(animation);
+        if (_animation is not null)
+            AnimationHost.Children.Add(_animation);
+
         if (!isPrimary)
         {
             CountdownText.Margin = new Thickness(0, 24, 0, 0);
@@ -67,10 +78,12 @@ public partial class BreakOverlayWindow : Window
         var totalSeconds = (int)Math.Ceiling(remaining.TotalSeconds);
         CountdownText.Text = $"{totalSeconds / 60:00}:{totalSeconds % 60:00}";
 
+        var locked = _machine.State == BreakState.BreakLocked;
+        _animation?.SetState(_machine.BreakProgress, animated: locked && animated);
+
         if (!_isPrimary)
             return;
 
-        var locked = _machine.State == BreakState.BreakLocked;
         Hourglass.SetState(_machine.BreakProgress, streamActive: locked, animateStream: locked && animated);
     }
 

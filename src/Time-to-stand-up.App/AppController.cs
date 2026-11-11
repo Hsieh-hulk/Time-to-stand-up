@@ -249,7 +249,7 @@ internal sealed class AppController : IDisposable
         BreakOverlayWindow? primary = null;
         foreach (var screen in Forms.Screen.AllScreens)
         {
-            var overlay = new BreakOverlayWindow(_machine, screen.Primary, screen.Bounds);
+            var overlay = new BreakOverlayWindow(_machine, screen.Primary, screen.Bounds, _config.Animation);
             overlay.UnlockRequested += () => _machine.Unlock();
             _overlays.Add(overlay);
             overlay.Show();

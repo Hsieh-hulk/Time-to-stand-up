@@ -34,6 +34,12 @@ public sealed record AppConfig(
     [JsonPropertyOrder(1)]
     public IReadOnlyList<string> PauseProcesses { get; init; } = Array.Empty<string>();
 
+    /// <summary>休息畫面的背景動畫主題。舊版設定檔沒有這個欄位時用預設主題。</summary>
+    [JsonPropertyOrder(2)]
+    public BreakAnimation Animation { get; init; } = DefaultAnimation;
+
+    public const BreakAnimation DefaultAnimation = BreakAnimation.Breathing;
+
     // record 預設用參考比較清單;改成逐項比較,讓「存檔再讀回」仍然相等。
     public bool Equals(AppConfig? other) =>
         other is not null
@@ -42,6 +48,7 @@ public sealed record AppConfig(
         && FirstRunCompleted == other.FirstRunCompleted
         && Theme == other.Theme
         && SmartPause == other.SmartPause
+        && Animation == other.Animation
         && PauseProcesses.SequenceEqual(other.PauseProcesses, StringComparer.Ordinal);
 
     public override int GetHashCode()
@@ -52,6 +59,7 @@ public sealed record AppConfig(
         hash.Add(FirstRunCompleted);
         hash.Add(Theme);
         hash.Add(SmartPause);
+        hash.Add(Animation);
         foreach (var name in PauseProcesses)
             hash.Add(name, StringComparer.Ordinal);
         return hash.ToHashCode();

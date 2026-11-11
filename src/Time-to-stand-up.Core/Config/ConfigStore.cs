@@ -112,10 +112,15 @@ public sealed class ConfigStore
         var theme = ReadTheme(root, ref reset);
         var smartPause = ReadBool(root, "smartPause", true, ref reset);
         var pauseProcesses = ReadProcessList(root, "pauseProcesses", ref reset);
+        var animation = ReadAnimation(root, ref reset);
 
         // 舊版的 devMode / dev*Seconds / idleMinutes 欄位已移除,出現時當作未知欄位忽略。
         return new(
-            new AppConfig(work, rest, firstRun, theme, smartPause) { PauseProcesses = pauseProcesses },
+            new AppConfig(work, rest, firstRun, theme, smartPause)
+            {
+                PauseProcesses = pauseProcesses,
+                Animation = animation,
+            },
             reset ? ConfigLoadStatus.FieldsReset : ConfigLoadStatus.Loaded);
     }
 
@@ -153,6 +158,21 @@ public sealed class ConfigStore
 
         reset = true;
         return AppTheme.System;
+    }
+
+    // 舊版設定檔沒有 animation 欄位,用預設主題;有欄位但不是已知的名稱才算被重設。
+    private static BreakAnimation ReadAnimation(JsonElement root, ref bool reset)
+    {
+        if (!TryFind(root, "animation", out var element))
+            return AppConfig.DefaultAnimation;
+
+        if (element.ValueKind == JsonValueKind.String
+            && Enum.TryParse<BreakAnimation>(element.GetString(), ignoreCase: true, out var value)
+            && Enum.IsDefined(value))
+            return value;
+
+        reset = true;
+        return AppConfig.DefaultAnimation;
     }
 
     // 欄位不存在(例如舊版設定檔)用預設值,但不算「被重設」;存在卻不合法才算。

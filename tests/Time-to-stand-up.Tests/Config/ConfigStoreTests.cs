@@ -84,7 +84,7 @@ public sealed class ConfigStoreTests : IDisposable
         var names = document.RootElement.EnumerateObject().Select(p => p.Name).ToArray();
 
         Assert.Equal(
-            new[] { "workMinutes", "breakMinutes", "firstRunCompleted", "theme", "smartPause", "pauseProcesses" },
+            new[] { "workMinutes", "breakMinutes", "firstRunCompleted", "theme", "smartPause", "pauseProcesses", "animation" },
             names);
     }
 
@@ -259,6 +259,46 @@ public sealed class ConfigStoreTests : IDisposable
 
         Assert.Equal(ConfigLoadStatus.FieldsReset, result.Status);
         Assert.Equal(new AppConfig(40, 6, true, AppTheme.System), result.Config);
+    }
+
+    [Theory]
+    [InlineData(BreakAnimation.None)]
+    [InlineData(BreakAnimation.Breathing)]
+    [InlineData(BreakAnimation.Starfield)]
+    [InlineData(BreakAnimation.Waves)]
+    [InlineData(BreakAnimation.Stretch)]
+    public void AnimationRoundTripsAsAReadableName(BreakAnimation animation)
+    {
+        Store.Save(new AppConfig(30, 5, true) { Animation = animation });
+
+        var text = File.ReadAllText(Path.Combine(_dir, ConfigStore.FileName));
+        Assert.Contains($"\"animation\": \"{animation}\"", text);
+        Assert.Equal(animation, Store.Load().Config.Animation);
+    }
+
+    [Fact]
+    public void OldFileWithoutAnimationUsesDefaultWithoutCountingAsReset()
+    {
+        WriteRaw("{\"workMinutes\": 40, \"breakMinutes\": 6, \"firstRunCompleted\": true}");
+
+        var result = Store.Load();
+
+        Assert.Equal(ConfigLoadStatus.Loaded, result.Status);
+        Assert.Equal(AppConfig.DefaultAnimation, result.Config.Animation);
+    }
+
+    [Theory]
+    [InlineData("\"fireworks\"")]
+    [InlineData("7")]
+    [InlineData("\"5\"")]
+    public void UnknownAnimationFallsBackToDefaultAndKeepsOtherFields(string animationJson)
+    {
+        WriteRaw("{\"workMinutes\": 40, \"breakMinutes\": 6, \"firstRunCompleted\": true, \"animation\": " + animationJson + "}");
+
+        var result = Store.Load();
+
+        Assert.Equal(ConfigLoadStatus.FieldsReset, result.Status);
+        Assert.Equal(new AppConfig(40, 6, true), result.Config);
     }
 
     [Fact]

@@ -44,6 +44,15 @@ public class AppConfigTests
         Assert.Equal(new[] { "zoom" }, (config with { WorkMinutes = 45 }).PauseProcesses);
     }
 
+    [Fact]
+    public void AnimationParticipatesInEqualityAndSurvivesWith()
+    {
+        var config = new AppConfig(30, 5, true) { Animation = BreakAnimation.Stretch };
+
+        Assert.NotEqual(config, new AppConfig(30, 5, true) { Animation = BreakAnimation.Waves });
+        Assert.Equal(BreakAnimation.Stretch, (config with { WorkMinutes = 45 }).Animation);
+    }
+
     [Theory]
     [InlineData(30, 5, ReminderPreset.Standard)]
     [InlineData(60, 10, ReminderPreset.Relaxed)]
