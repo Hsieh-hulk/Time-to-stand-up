@@ -73,7 +73,6 @@ internal sealed class AppController : IDisposable
     {
         CreateTray();
         SystemEvents.DisplaySettingsChanged += OnDisplaySettingsChanged;
-        SystemEvents.UserPreferenceChanged += OnUserPreferenceChanged;
         _presence = new PresenceMonitor();
         _presence.AwayChanged += OnAwayChanged;
         _lastTick = _clock.UtcNow;
@@ -85,7 +84,6 @@ internal sealed class AppController : IDisposable
         _tick.Stop();
         _frame.Stop();
         SystemEvents.DisplaySettingsChanged -= OnDisplaySettingsChanged;
-        SystemEvents.UserPreferenceChanged -= OnUserPreferenceChanged;
         if (_presence is not null)
         {
             _presence.AwayChanged -= OnAwayChanged;
@@ -455,33 +453,11 @@ internal sealed class AppController : IDisposable
             _exitItem.Enabled = working;
     }
 
-    /// <summary>工作列(系統匣所在)目前是否為淺色;讀不到時視為深色(Windows 11 預設)。</summary>
-    private static bool TaskbarIsLight()
-    {
-        using var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize");
-        return key?.GetValue("SystemUsesLightTheme") is int value && value != 0;
-    }
-
-    /// <summary>依工作列深淺色載入內嵌 .ico:淺色用黑色人物、深色用白色人物,並挑系統小圖示尺寸的影格。</summary>
+    /// <summary>載入內嵌 .ico(有色底,深淺色工作列皆清楚),並挑系統小圖示尺寸的影格。</summary>
     private static Drawing.Icon CreateTrayIcon()
     {
-        var file = TaskbarIsLight() ? "Time-to-stand-up.ico" : "Time-to-stand-up-white.ico";
-        var info = Application.GetResourceStream(new Uri($"pack://application:,,,/Assets/{file}"));
+        var info = Application.GetResourceStream(new Uri("pack://application:,,,/Assets/Time-to-stand-up.ico"));
         using var stream = info.Stream;
         return new Drawing.Icon(stream, Forms.SystemInformation.SmallIconSize);
-    }
-
-    private void OnUserPreferenceChanged(object? sender, UserPreferenceChangedEventArgs e)
-    {
-        if (e.Category is not (UserPreferenceCategory.General or UserPreferenceCategory.Color or UserPreferenceCategory.VisualStyle))
-            return;
-        Application.Current?.Dispatcher.BeginInvoke(() =>
-        {
-            if (_tray is null) return;
-            var old = _trayIcon;
-            _trayIcon = CreateTrayIcon();
-            _tray.Icon = _trayIcon;
-            old?.Dispose();
-        });
     }
 }

@@ -27,7 +27,6 @@
   <ItemGroup>
     <Resource Include="Assets\Fonts\*.ttf" />
     <Resource Include="Assets\Time-to-stand-up.ico" />
-    <Resource Include="Assets\Time-to-stand-up-white.ico" />
     <None Include="Assets\Fonts\LICENSE.txt" />
   </ItemGroup>
 

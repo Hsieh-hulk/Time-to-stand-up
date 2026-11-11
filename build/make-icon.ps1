@@ -1,15 +1,12 @@
-﻿# Generates src/Time-to-stand-up.App/Assets/Time-to-stand-up.ico (transparent background with a black stretching figure
-# from build/icon-source.png; icon by Freepik on Flaticon: https://www.flaticon.com/free-icon/stretching-exercises_10699).
-# Run with -Color White to produce Time-to-stand-up-white.ico (tray icon on dark taskbars);
-# the black one is the exe icon and the tray icon on light taskbars.
+# Generates src/Time-to-stand-up.App/Assets/Time-to-stand-up.ico (transparent background, full-color figure)
+# from build/icon-source.png; icon by juicy_fish on Flaticon: https://www.flaticon.com/free-icon/person-standing_5557271
+# Used as the exe, installer and tray icon.
 # Only needed when the icon design changes; the .ico is committed to the repo.
 param(
-    [ValidateSet('Black', 'White')][string]$Color = 'Black',
     [string]$OutFile = ''
 )
 if (-not $OutFile) {
-    $name = if ($Color -eq 'White') { 'Time-to-stand-up-white.ico' } else { 'Time-to-stand-up.ico' }
-    $OutFile = Join-Path $PSScriptRoot "..\src\Time-to-stand-up.App\Assets\$name"
+    $OutFile = Join-Path $PSScriptRoot '..\src\Time-to-stand-up.App\Assets\Time-to-stand-up.ico'
 }
 
 $ErrorActionPreference = 'Stop'
@@ -35,7 +32,7 @@ function Resize-Smooth([System.Drawing.Image]$img, [int]$w, [int]$h) {
 }
 
 foreach ($size in $sizes) {
-    # Fit the figure into the canvas (transparent background, black figure), shrinking in halving steps.
+    # Fit the figure into the canvas (transparent background), shrinking in halving steps.
     $h = [int][Math]::Round($size * 0.94)
     $w = [int][Math]::Round($h * $src.Width / $src.Height)
     $cur = $src
@@ -52,13 +49,6 @@ foreach ($size in $sizes) {
     $g.Clear([System.Drawing.Color]::Transparent)
     $g.CompositingMode = [System.Drawing.Drawing2D.CompositingMode]::SourceOver
     $tint = New-Object System.Drawing.Imaging.ImageAttributes
-    if ($Color -eq 'White') {
-        # Keep alpha, force RGB to white.
-        $cm = New-Object System.Drawing.Imaging.ColorMatrix
-        $cm.Matrix00 = 0; $cm.Matrix11 = 0; $cm.Matrix22 = 0
-        $cm.Matrix40 = 1; $cm.Matrix41 = 1; $cm.Matrix42 = 1
-        $tint.SetColorMatrix($cm)
-    }
     $destRect = New-Object System.Drawing.Rectangle ([int][Math]::Floor(($size - $w) / 2)), ([int][Math]::Floor(($size - $h) / 2)), $w, $h
     $g.DrawImage($fig, $destRect, 0, 0, $fig.Width, $fig.Height, [System.Drawing.GraphicsUnit]::Pixel, $tint)
     $tint.Dispose()

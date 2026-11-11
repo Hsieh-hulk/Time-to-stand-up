@@ -79,4 +79,4 @@ docs/                    測試步驟、已知問題、待辦、發版流程
 
 ## 圖示來源
 
-應用程式圖示使用 [Stretching exercises](https://www.flaticon.com/free-icon/stretching-exercises_10699)(Freepik 製作,來自 Flaticon),原圖存放於 `build/icon-source.png`。
+應用程式圖示使用 [Person standing](https://www.flaticon.com/free-icon/person-standing_5557271)(juicy_fish 製作,來自 Flaticon),原圖存放於 `build/icon-source.png`,由 `build/make-icon.ps1` 轉成 `.ico`。
