@@ -27,6 +27,9 @@
   <ItemGroup>
     <Resource Include="Assets\Fonts\*.ttf" />
     <Resource Include="Assets\Time-to-stand-up.ico" />
+    <!-- 寵物精靈圖與動畫表,由 tools/make_pet_sprites.py 產生 -->
+    <Resource Include="Assets\Pets\*.png" />
+    <Resource Include="Assets\Pets\*.json" />
     <None Include="Assets\Fonts\LICENSE.txt" />
   </ItemGroup>
 

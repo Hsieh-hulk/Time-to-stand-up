@@ -84,7 +84,7 @@ public sealed class ConfigStoreTests : IDisposable
         var names = document.RootElement.EnumerateObject().Select(p => p.Name).ToArray();
 
         Assert.Equal(
-            new[] { "workMinutes", "breakMinutes", "firstRunCompleted", "theme", "smartPause", "pauseProcesses" },
+            new[] { "workMinutes", "breakMinutes", "firstRunCompleted", "theme", "smartPause", "pauseProcesses", "pet" },
             names);
     }
 
@@ -259,6 +259,56 @@ public sealed class ConfigStoreTests : IDisposable
 
         Assert.Equal(ConfigLoadStatus.FieldsReset, result.Status);
         Assert.Equal(new AppConfig(40, 6, true, AppTheme.System), result.Config);
+    }
+
+    [Theory]
+    [InlineData(PetKind.Cat)]
+    [InlineData(PetKind.Shiba)]
+    [InlineData(PetKind.Slime)]
+    [InlineData(PetKind.SandSprite)]
+    public void PetRoundTripsAsAReadableName(PetKind pet)
+    {
+        Store.Save(new AppConfig(30, 5, true) { Pet = pet });
+
+        var text = File.ReadAllText(Path.Combine(_dir, ConfigStore.FileName));
+        Assert.Contains($"\"pet\": \"{pet}\"", text);
+        Assert.Equal(pet, Store.Load().Config.Pet);
+    }
+
+    [Fact]
+    public void RemovedAnimationFieldIsIgnoredWithoutCountingAsReset()
+    {
+        WriteRaw("{\"workMinutes\": 40, \"breakMinutes\": 6, \"firstRunCompleted\": true, \"animation\": \"Waves\"}");
+
+        var result = Store.Load();
+
+        Assert.Equal(ConfigLoadStatus.Loaded, result.Status);
+        Assert.Equal(new AppConfig(40, 6, true), result.Config);
+    }
+
+    [Fact]
+    public void OldFileWithoutPetUsesDefaultWithoutCountingAsReset()
+    {
+        WriteRaw("{\"workMinutes\": 40, \"breakMinutes\": 6, \"firstRunCompleted\": true}");
+
+        var result = Store.Load();
+
+        Assert.Equal(ConfigLoadStatus.Loaded, result.Status);
+        Assert.Equal(AppConfig.DefaultPet, result.Config.Pet);
+    }
+
+    [Theory]
+    [InlineData("\"dragon\"")]
+    [InlineData("7")]
+    [InlineData("\"5\"")]
+    public void UnknownPetFallsBackToDefaultAndKeepsOtherFields(string petJson)
+    {
+        WriteRaw("{\"workMinutes\": 40, \"breakMinutes\": 6, \"firstRunCompleted\": true, \"pet\": " + petJson + "}");
+
+        var result = Store.Load();
+
+        Assert.Equal(ConfigLoadStatus.FieldsReset, result.Status);
+        Assert.Equal(new AppConfig(40, 6, true), result.Config);
     }
 
     [Fact]

@@ -77,5 +77,8 @@
                    FontSize="13" Foreground="#FF6C7F90"
                    HorizontalAlignment="Center" VerticalAlignment="Bottom"
                    Margin="0,0,0,24" />
+
+        <!-- 寵物:蓋在內容上方(可以站到沙漏上),不接收滑鼠 -->
+        <local:PetLayer x:Name="PetLayer" />
     </Grid>
 </Window>

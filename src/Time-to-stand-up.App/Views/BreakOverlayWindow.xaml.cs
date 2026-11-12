@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Interop;
@@ -25,7 +26,18 @@ public partial class BreakOverlayWindow : Window
     private bool _allowClose;
     private bool _readyShown;
 
-    public BreakOverlayWindow(BreakStateMachine machine, bool isPrimary, System.Drawing.Rectangle physicalBounds)
+    private readonly double _segmentStart;
+    private bool _platformMeasurePending;
+
+    /// <param name="pet">所有螢幕共用的寵物;null 表示不顯示。</param>
+    /// <param name="segmentStart">這個螢幕在寵物軌道上的起點(參考單位)。</param>
+    public BreakOverlayWindow(
+        BreakStateMachine machine,
+        bool isPrimary,
+        System.Drawing.Rectangle physicalBounds,
+        PetBrain? pet = null,
+        SpriteSheet? sprites = null,
+        double segmentStart = 0)
     {
         InitializeComponent();
         _machine = machine;
@@ -35,6 +47,10 @@ public partial class BreakOverlayWindow : Window
         DisclaimerText.Text = HealthCopy.OverlayDisclaimer;
         Hourglass.Visibility = isPrimary ? Visibility.Visible : Visibility.Collapsed;
         DisclaimerText.Visibility = isPrimary ? Visibility.Visible : Visibility.Collapsed;
+        _segmentStart = segmentStart;
+        if (pet is not null && sprites is not null)
+            PetLayer.Attach(pet, sprites, segmentStart);
+
         if (!isPrimary)
         {
             CountdownText.Margin = new Thickness(0, 24, 0, 0);
@@ -49,6 +65,8 @@ public partial class BreakOverlayWindow : Window
             UpdateScale();
         };
         SizeChanged += (_, _) => UpdateScale();
+        // 內容區塊大小改變(例如解鎖按鈕出現)時,沙漏與倒數的位置會跟著變。
+        ContentPanel.SizeChanged += (_, _) => SchedulePlatformMeasure();
         Closing += OnClosing;
 
         ShowLockedState();
@@ -58,6 +76,11 @@ public partial class BreakOverlayWindow : Window
     /// <summary>主螢幕的解鎖按鈕被按下。</summary>
     public event Action? UnlockRequested;
 
+    /// <summary>
+    /// 主螢幕上寵物可以站的平台(沙漏頂蓋、倒數數字)位置改變,座標已換成寵物軌道的參考單位。
+    /// </summary>
+    public event Action<IReadOnlyList<PetPlatform>>? PlatformsChanged;
+
     public bool IsPrimary => _isPrimary;
 
     /// <summary>依狀態機目前的進度更新倒數文字與沙漏。</summary>
@@ -66,6 +89,8 @@ public partial class BreakOverlayWindow : Window
         var remaining = _machine.BreakRemaining;
         var totalSeconds = (int)Math.Ceiling(remaining.TotalSeconds);
         CountdownText.Text = $"{totalSeconds / 60:00}:{totalSeconds % 60:00}";
+
+        PetLayer.InvalidateVisual();
 
         if (!_isPrimary)
             return;
@@ -168,6 +193,67 @@ public partial class BreakOverlayWindow : Window
             return;
         var scale = Math.Clamp(ActualHeight / ReferenceHeight, 0.4, 4);
         ContentPanel.LayoutTransform = new ScaleTransform(scale, scale);
+        SchedulePlatformMeasure();
+    }
+
+    /// <summary>等這一輪版面配置完成後再量測平台位置(同一輪內多次要求只量一次)。</summary>
+    private void SchedulePlatformMeasure()
+    {
+        if (!_isPrimary || _platformMeasurePending)
+            return;
+        _platformMeasurePending = true;
+        Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() =>
+        {
+            _platformMeasurePending = false;
+            MeasurePlatforms();
+        }));
+    }
+
+    private void MeasurePlatforms()
+    {
+        if (!IsLoaded || ActualHeight <= 0 || PlatformsChanged is null)
+            return;
+
+        // 寵物軌道以整個視窗高度 / 900 為比例(不受 ContentPanel 縮放上下限影響)。
+        var unit = ActualHeight / PetWorld.ReferenceHeight;
+        var platforms = new List<PetPlatform>();
+
+        // 沙漏頂蓋:HourglassControl 的邏輯座標為 200×320,頂蓋在 x 8~192、y 6。
+        var hourglass = BoundsInWindow(Hourglass);
+        if (!hourglass.IsEmpty && hourglass.Width > 0)
+        {
+            var perLogical = hourglass.Width / 200;
+            platforms.Add(ToPlatform(
+                hourglass.Left + 8 * perLogical,
+                hourglass.Left + 192 * perLogical,
+                hourglass.Top + 6 * perLogical,
+                unit));
+        }
+
+        // 倒數數字:文字方塊上方有行高留白,數字的頂端約在 1/4 高度處。
+        var countdown = BoundsInWindow(CountdownText);
+        if (!countdown.IsEmpty && countdown.Width > 0)
+        {
+            platforms.Add(ToPlatform(
+                countdown.Left,
+                countdown.Right,
+                countdown.Top + countdown.Height * 0.25,
+                unit));
+        }
+
+        PlatformsChanged.Invoke(platforms);
+    }
+
+    private PetPlatform ToPlatform(double left, double right, double top, double unit) => new(
+        Math.Round(_segmentStart + left / unit),
+        Math.Round(_segmentStart + right / unit),
+        Math.Round(top / unit));
+
+    private Rect BoundsInWindow(FrameworkElement element)
+    {
+        if (element.Visibility != Visibility.Visible || element.ActualWidth <= 0)
+            return Rect.Empty;
+        return element.TransformToAncestor(this).TransformBounds(new Rect(0, 0, element.ActualWidth, element.ActualHeight));
     }
 
     private void OnClosing(object? sender, CancelEventArgs e)
