@@ -287,6 +287,49 @@ public sealed class ConfigStoreTests : IDisposable
     }
 
     [Fact]
+    public void SettingsWindowSizeRoundTrips()
+    {
+        Store.Save(new AppConfig(30, 5, true) { SettingsWidth = 820, SettingsHeight = 640 });
+
+        var result = Store.Load();
+
+        Assert.Equal(ConfigLoadStatus.Loaded, result.Status);
+        Assert.Equal(820, result.Config.SettingsWidth);
+        Assert.Equal(640, result.Config.SettingsHeight);
+    }
+
+    [Fact]
+    public void OldFileWithoutSettingsSizeLeavesItNullWithoutCountingAsReset()
+    {
+        WriteRaw("{\"workMinutes\": 40, \"breakMinutes\": 6, \"firstRunCompleted\": true}");
+
+        var result = Store.Load();
+
+        Assert.Equal(ConfigLoadStatus.Loaded, result.Status);
+        Assert.Null(result.Config.SettingsWidth);
+        Assert.Null(result.Config.SettingsHeight);
+    }
+
+    [Theory]
+    [InlineData("0", "700")]
+    [InlineData("700", "-5")]
+    [InlineData("99999", "700")]
+    [InlineData("\"wide\"", "700")]
+    [InlineData("700.5", "700")]
+    public void InvalidSettingsSizeIsDroppedAndKeepsOtherFields(string width, string height)
+    {
+        WriteRaw("{\"workMinutes\": 40, \"breakMinutes\": 6, \"firstRunCompleted\": true,"
+            + " \"settingsWidth\": " + width + ", \"settingsHeight\": " + height + "}");
+
+        var result = Store.Load();
+
+        Assert.Equal(ConfigLoadStatus.FieldsReset, result.Status);
+        Assert.Equal(40, result.Config.WorkMinutes);
+        Assert.Null(result.Config.SettingsWidth);
+        Assert.Null(result.Config.SettingsHeight);
+    }
+
+    [Fact]
     public void OldFileWithoutPetUsesDefaultWithoutCountingAsReset()
     {
         WriteRaw("{\"workMinutes\": 40, \"breakMinutes\": 6, \"firstRunCompleted\": true}");

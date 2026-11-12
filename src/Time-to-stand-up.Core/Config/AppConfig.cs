@@ -40,6 +40,21 @@ public sealed record AppConfig(
 
     public const PetKind DefaultPet = PetKind.Cat;
 
+    /// <summary>上次關閉設定視窗時的寬(裝置無關像素)。null = 沒記錄過,用視窗的預設大小。</summary>
+    [JsonPropertyOrder(3)]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? SettingsWidth { get; init; }
+
+    /// <summary>上次關閉設定視窗時的高。null = 沒記錄過。</summary>
+    [JsonPropertyOrder(4)]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? SettingsHeight { get; init; }
+
+    public const int MinSettingsSize = 200;
+    public const int MaxSettingsSize = 10000;
+
+    public static bool IsValidSettingsSize(int size) => size is >= MinSettingsSize and <= MaxSettingsSize;
+
     // record 預設用參考比較清單;改成逐項比較,讓「存檔再讀回」仍然相等。
     public bool Equals(AppConfig? other) =>
         other is not null
@@ -49,6 +64,8 @@ public sealed record AppConfig(
         && Theme == other.Theme
         && SmartPause == other.SmartPause
         && Pet == other.Pet
+        && SettingsWidth == other.SettingsWidth
+        && SettingsHeight == other.SettingsHeight
         && PauseProcesses.SequenceEqual(other.PauseProcesses, StringComparer.Ordinal);
 
     public override int GetHashCode()
@@ -60,6 +77,8 @@ public sealed record AppConfig(
         hash.Add(Theme);
         hash.Add(SmartPause);
         hash.Add(Pet);
+        hash.Add(SettingsWidth);
+        hash.Add(SettingsHeight);
         foreach (var name in PauseProcesses)
             hash.Add(name, StringComparer.Ordinal);
         return hash.ToHashCode();

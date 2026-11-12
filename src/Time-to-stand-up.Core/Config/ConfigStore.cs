@@ -113,6 +113,12 @@ public sealed class ConfigStore
         var smartPause = ReadBool(root, "smartPause", true, ref reset);
         var pauseProcesses = ReadProcessList(root, "pauseProcesses", ref reset);
         var pet = ReadPet(root, ref reset);
+        var settingsWidth = ReadOptionalSize(root, "settingsWidth", ref reset);
+        var settingsHeight = ReadOptionalSize(root, "settingsHeight", ref reset);
+
+        // 只記了一邊沒有意義,兩邊都要有才還原。
+        if (settingsWidth is null || settingsHeight is null)
+            settingsWidth = settingsHeight = null;
 
         // 舊版的 devMode / dev*Seconds / idleMinutes / animation 欄位已移除,出現時當作未知欄位忽略。
         return new(
@@ -120,6 +126,8 @@ public sealed class ConfigStore
             {
                 PauseProcesses = pauseProcesses,
                 Pet = pet,
+                SettingsWidth = settingsWidth,
+                SettingsHeight = settingsHeight,
             },
             reset ? ConfigLoadStatus.FieldsReset : ConfigLoadStatus.Loaded);
     }
@@ -186,6 +194,20 @@ public sealed class ConfigStore
 
         reset = true;
         return fallback;
+    }
+
+    // 不存在或 null(舊版、沒記錄過)→ null,不算重設;存在卻不是範圍內的整數才算。
+    private static int? ReadOptionalSize(JsonElement root, string name, ref bool reset)
+    {
+        if (!TryFind(root, name, out var element) || element.ValueKind == JsonValueKind.Null)
+            return null;
+
+        if (element.ValueKind == JsonValueKind.Number && element.TryGetInt32(out var value)
+            && AppConfig.IsValidSettingsSize(value))
+            return value;
+
+        reset = true;
+        return null;
     }
 
     private static bool ReadBool(JsonElement root, string name, bool fallback, ref bool reset)

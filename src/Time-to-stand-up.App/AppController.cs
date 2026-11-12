@@ -431,6 +431,7 @@ internal sealed class AppController : IDisposable
 
         var window = new SettingsWindow(_config);
         window.SaveRequested += OnSettingsSaved;
+        window.SizeRemembered += OnSettingsSizeRemembered;
         window.Closed += (_, _) =>
         {
             if (ReferenceEquals(_settingsWindow, window))
@@ -446,6 +447,16 @@ internal sealed class AppController : IDisposable
         var window = _settingsWindow;
         _settingsWindow = null;
         window?.CloseWithoutSaving();
+    }
+
+    // 只記視窗大小:不走 OnSettingsSaved,不重新套用計時;寫檔失敗就算了,下次用預設大小。
+    private void OnSettingsSizeRemembered(int width, int height)
+    {
+        if (_config.SettingsWidth == width && _config.SettingsHeight == height)
+            return;
+
+        _config = _config with { SettingsWidth = width, SettingsHeight = height };
+        _store.Save(_config);
     }
 
     private void OnSettingsSaved(AppConfig newConfig)

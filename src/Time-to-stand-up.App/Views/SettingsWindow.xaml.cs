@@ -22,7 +22,16 @@ public partial class SettingsWindow : Window
         _current = current;
         _theme = current.Theme;
 
-        SizeChanged += (_, _) => UpdateScale();
+        RestoreSavedSize(current);
+        _lastNormalSize = new Size(Width, Height);
+
+        SizeChanged += (_, e) =>
+        {
+            // 最大化時的尺寸不記,下次開啟用最後一次的一般大小。
+            if (WindowState == WindowState.Normal)
+                _lastNormalSize = e.NewSize;
+            UpdateScale();
+        };
         UpdateScale();
 
         ThemeButton.Content = ThemeIcon();
@@ -31,6 +40,8 @@ public partial class SettingsWindow : Window
         {
             if (!_saved)
                 ThemeManager.SetTheme(_current.Theme);
+            // 儲存、取消、X、休息開始被強制關閉,都會記住這次的大小。
+            SizeRemembered?.Invoke((int)Math.Round(_lastNormalSize.Width), (int)Math.Round(_lastNormalSize.Height));
         };
 
         _autoStartInitial = AutoStartManager.IsEnabled();
@@ -42,6 +53,22 @@ public partial class SettingsWindow : Window
         PetPicker.Selected = current.Pet;
         Picker.SelectionChanged += (_, _) => UpdateSaveEnabled();
         UpdateSaveEnabled();
+    }
+
+    private Size _lastNormalSize;
+
+    /// <summary>視窗關閉時觸發(寬、高),呼叫端存進設定檔。不經過 <see cref="SaveRequested"/>,不會重新套用計時。</summary>
+    public event Action<int, int>? SizeRemembered;
+
+    /// <summary>沿用上次的大小;限制在最小值與目前螢幕工作區之內(例如換到較小的螢幕)。位置仍置中。</summary>
+    private void RestoreSavedSize(AppConfig config)
+    {
+        if (config.SettingsWidth is not { } width || config.SettingsHeight is not { } height)
+            return;
+
+        var area = SystemParameters.WorkArea;
+        Width = Math.Clamp(width, MinWidth, Math.Max(MinWidth, area.Width));
+        Height = Math.Clamp(height, MinHeight, Math.Max(MinHeight, area.Height));
     }
 
     private void UpdateSaveEnabled() => SaveButton.IsEnabled = Picker.IsValid;
