@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using System.Windows;
 using System.Windows.Threading;
 using Microsoft.Win32;
@@ -48,6 +50,12 @@ internal sealed class AppController : IDisposable
     private WarningToastWindow? _toast;
     private bool _toastDismissed;
     private SettingsWindow? _settingsWindow;
+
+    // 休息期間在所有螢幕上活動的寵物(一隻,共用)。螢幕由左到右串成一條軌道,見 PetWorld。
+    private PetBrain? _pet;
+    private PetWorld? _petWorld;
+    private Forms.Screen[] _petScreens = Array.Empty<Forms.Screen>();
+    private readonly Stopwatch _petClock = new();
 
     /// <param name="settings">這次執行實際使用的設定(設定檔加上命令列覆寫)。</param>
     /// <param name="config">設定檔目前的內容,設定視窗以它為起點。</param>
@@ -143,7 +151,37 @@ internal sealed class AppController : IDisposable
         }
     }
 
-    private void OnFrame() => RefreshOverlays(animated: true);
+    private void OnFrame()
+    {
+        if (_pet is not null)
+        {
+            var dt = _petClock.Elapsed.TotalSeconds;
+            _petClock.Restart();
+            _pet.Update(dt, CursorOnTrack());
+        }
+
+        RefreshOverlays(animated: true);
+    }
+
+    /// <summary>滑鼠游標在寵物軌道上的位置(參考單位);不在任何螢幕上時為 null。</summary>
+    private (double X, double Y)? CursorOnTrack()
+    {
+        if (_petWorld is null)
+            return null;
+
+        var cursor = Forms.Cursor.Position;
+        for (var i = 0; i < _petScreens.Length; i++)
+        {
+            var bounds = _petScreens[i].Bounds;
+            if (!bounds.Contains(cursor) || bounds.Height <= 0)
+                continue;
+
+            var unit = PetWorld.ReferenceHeight / bounds.Height;
+            return (_petWorld.ScreenStart(i) + (cursor.X - bounds.X) * unit, (cursor.Y - bounds.Y) * unit);
+        }
+
+        return null;
+    }
 
     /// <summary>
     /// 每 <see cref="ProcessPollTicks"/> 秒列舉一次行程,其餘 tick 沿用上次結果。
@@ -229,7 +267,8 @@ internal sealed class AppController : IDisposable
                 break;
 
             case BreakState.BreakReady:
-                _frame.Stop();
+                // frame timer 不停:沙漏已靜止,但寵物要繼續活動到解鎖。
+                _pet?.Celebrate();
                 foreach (var overlay in _overlays)
                     overlay.ShowReadyState(AnimationsEnabled);
                 break;
@@ -237,6 +276,8 @@ internal sealed class AppController : IDisposable
             case BreakState.Working:
                 _frame.Stop();
                 CloseOverlays();
+                _pet = null;
+                _petWorld = null;
                 _toastDismissed = false;
                 break;
         }
@@ -246,11 +287,33 @@ internal sealed class AppController : IDisposable
     {
         CloseOverlays();
 
-        BreakOverlayWindow? primary = null;
-        foreach (var screen in Forms.Screen.AllScreens)
+        // 螢幕由左到右排成寵物的軌道;螢幕配置改變時沿用同一隻寵物,只換世界。
+        _petScreens = Forms.Screen.AllScreens.OrderBy(screen => screen.Bounds.X).ToArray();
+        _petWorld = new PetWorld(_petScreens
+            .Select(screen => PetWorld.ScreenLength(screen.Bounds.Width, screen.Bounds.Height))
+            .ToArray());
+        if (_pet is null)
         {
-            var overlay = new BreakOverlayWindow(_machine, screen.Primary, screen.Bounds, _config.Animation);
+            var primaryIndex = Math.Max(0, Array.FindIndex(_petScreens, screen => screen.Primary));
+            var startX = _petWorld.ScreenStart(primaryIndex) + _petWorld.ScreenLengths[primaryIndex] * 0.25;
+            _pet = new PetBrain(_petWorld, PetProfile.For(_config.Pet), new Random(), startX);
+            _petClock.Restart();
+        }
+        else
+        {
+            _pet.SetWorld(_petWorld);
+        }
+
+        var sprites = SpriteSheet.Load(_config.Pet);
+
+        BreakOverlayWindow? primary = null;
+        for (var i = 0; i < _petScreens.Length; i++)
+        {
+            var screen = _petScreens[i];
+            var overlay = new BreakOverlayWindow(
+                _machine, screen.Primary, screen.Bounds, _pet, sprites, _petWorld.ScreenStart(i));
             overlay.UnlockRequested += () => _machine.Unlock();
+            overlay.PlatformsChanged += OnPetPlatformsChanged;
             _overlays.Add(overlay);
             overlay.Show();
             if (screen.Primary)
@@ -258,6 +321,14 @@ internal sealed class AppController : IDisposable
         }
 
         primary?.Activate();
+    }
+
+    private void OnPetPlatformsChanged(IReadOnlyList<PetPlatform> platforms)
+    {
+        if (_pet is null || _petWorld is null)
+            return;
+        _petWorld = _petWorld.WithPlatforms(platforms);
+        _pet.SetWorld(_petWorld);
     }
 
     private void CloseOverlays()

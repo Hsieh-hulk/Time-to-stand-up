@@ -84,7 +84,7 @@ public sealed class ConfigStoreTests : IDisposable
         var names = document.RootElement.EnumerateObject().Select(p => p.Name).ToArray();
 
         Assert.Equal(
-            new[] { "workMinutes", "breakMinutes", "firstRunCompleted", "theme", "smartPause", "pauseProcesses", "animation" },
+            new[] { "workMinutes", "breakMinutes", "firstRunCompleted", "theme", "smartPause", "pauseProcesses", "pet" },
             names);
     }
 
@@ -262,38 +262,48 @@ public sealed class ConfigStoreTests : IDisposable
     }
 
     [Theory]
-    [InlineData(BreakAnimation.None)]
-    [InlineData(BreakAnimation.Breathing)]
-    [InlineData(BreakAnimation.Starfield)]
-    [InlineData(BreakAnimation.Waves)]
-    [InlineData(BreakAnimation.Stretch)]
-    public void AnimationRoundTripsAsAReadableName(BreakAnimation animation)
+    [InlineData(PetKind.Cat)]
+    [InlineData(PetKind.Shiba)]
+    [InlineData(PetKind.Slime)]
+    [InlineData(PetKind.SandSprite)]
+    public void PetRoundTripsAsAReadableName(PetKind pet)
     {
-        Store.Save(new AppConfig(30, 5, true) { Animation = animation });
+        Store.Save(new AppConfig(30, 5, true) { Pet = pet });
 
         var text = File.ReadAllText(Path.Combine(_dir, ConfigStore.FileName));
-        Assert.Contains($"\"animation\": \"{animation}\"", text);
-        Assert.Equal(animation, Store.Load().Config.Animation);
+        Assert.Contains($"\"pet\": \"{pet}\"", text);
+        Assert.Equal(pet, Store.Load().Config.Pet);
     }
 
     [Fact]
-    public void OldFileWithoutAnimationUsesDefaultWithoutCountingAsReset()
+    public void RemovedAnimationFieldIsIgnoredWithoutCountingAsReset()
+    {
+        WriteRaw("{\"workMinutes\": 40, \"breakMinutes\": 6, \"firstRunCompleted\": true, \"animation\": \"Waves\"}");
+
+        var result = Store.Load();
+
+        Assert.Equal(ConfigLoadStatus.Loaded, result.Status);
+        Assert.Equal(new AppConfig(40, 6, true), result.Config);
+    }
+
+    [Fact]
+    public void OldFileWithoutPetUsesDefaultWithoutCountingAsReset()
     {
         WriteRaw("{\"workMinutes\": 40, \"breakMinutes\": 6, \"firstRunCompleted\": true}");
 
         var result = Store.Load();
 
         Assert.Equal(ConfigLoadStatus.Loaded, result.Status);
-        Assert.Equal(AppConfig.DefaultAnimation, result.Config.Animation);
+        Assert.Equal(AppConfig.DefaultPet, result.Config.Pet);
     }
 
     [Theory]
-    [InlineData("\"fireworks\"")]
+    [InlineData("\"dragon\"")]
     [InlineData("7")]
     [InlineData("\"5\"")]
-    public void UnknownAnimationFallsBackToDefaultAndKeepsOtherFields(string animationJson)
+    public void UnknownPetFallsBackToDefaultAndKeepsOtherFields(string petJson)
     {
-        WriteRaw("{\"workMinutes\": 40, \"breakMinutes\": 6, \"firstRunCompleted\": true, \"animation\": " + animationJson + "}");
+        WriteRaw("{\"workMinutes\": 40, \"breakMinutes\": 6, \"firstRunCompleted\": true, \"pet\": " + petJson + "}");
 
         var result = Store.Load();
 

@@ -45,12 +45,12 @@ public class AppConfigTests
     }
 
     [Fact]
-    public void AnimationParticipatesInEqualityAndSurvivesWith()
+    public void PetParticipatesInEqualityAndSurvivesWith()
     {
-        var config = new AppConfig(30, 5, true) { Animation = BreakAnimation.Stretch };
+        var config = new AppConfig(30, 5, true) { Pet = PetKind.Slime };
 
-        Assert.NotEqual(config, new AppConfig(30, 5, true) { Animation = BreakAnimation.Waves });
-        Assert.Equal(BreakAnimation.Stretch, (config with { WorkMinutes = 45 }).Animation);
+        Assert.NotEqual(config, new AppConfig(30, 5, true) { Pet = PetKind.Shiba });
+        Assert.Equal(PetKind.Slime, (config with { WorkMinutes = 45 }).Pet);
     }
 
     [Theory]

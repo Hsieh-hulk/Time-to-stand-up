@@ -1,0 +1,53 @@
+{
+  "cell": 32,
+  "animations": {
+    "idle": {
+      "row": 0,
+      "frames": 4,
+      "fps": 3,
+      "loop": true
+    },
+    "walk": {
+      "row": 1,
+      "frames": 6,
+      "fps": 8,
+      "loop": true
+    },
+    "run": {
+      "row": 2,
+      "frames": 4,
+      "fps": 12,
+      "loop": true
+    },
+    "jump": {
+      "row": 3,
+      "frames": 4,
+      "fps": 8,
+      "loop": false
+    },
+    "sit": {
+      "row": 4,
+      "frames": 4,
+      "fps": 2,
+      "loop": true
+    },
+    "sleep": {
+      "row": 5,
+      "frames": 4,
+      "fps": 1.5,
+      "loop": true
+    },
+    "handstand": {
+      "row": 6,
+      "frames": 8,
+      "fps": 4,
+      "loop": false
+    },
+    "burrow": {
+      "row": 7,
+      "frames": 8,
+      "fps": 4,
+      "loop": false
+    }
+  }
+}

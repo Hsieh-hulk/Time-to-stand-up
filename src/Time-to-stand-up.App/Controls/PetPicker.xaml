@@ -1,0 +1,50 @@
+<UserControl x:Class="TimeToStandUp.App.PetPicker"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:TimeToStandUp.App"
+             FontFamily="{StaticResource AppFontFamily}"
+             FontSize="14">
+    <!-- 選擇休息畫面上的寵物,下方即時預覽。 -->
+    <StackPanel>
+        <UniformGrid Columns="2">
+            <RadioButton x:Name="CatRadio" Margin="0,0,12,10" Checked="OnPetChecked">
+                <StackPanel>
+                    <TextBlock FontWeight="Medium" Text="貓" />
+                    <TextBlock Margin="0,2,0,0" TextWrapping="Wrap" Text="愛伸懶腰、打哈欠"
+                               Foreground="{DynamicResource Glass.SubTextBrush}" />
+                </StackPanel>
+            </RadioButton>
+            <RadioButton x:Name="ShibaRadio" Margin="0,0,0,10" Checked="OnPetChecked">
+                <StackPanel>
+                    <TextBlock FontWeight="Medium" Text="柴犬" />
+                    <TextBlock Margin="0,2,0,0" TextWrapping="Wrap" Text="跑得最快,愛前撲伸展"
+                               Foreground="{DynamicResource Glass.SubTextBrush}" />
+                </StackPanel>
+            </RadioButton>
+            <RadioButton x:Name="SlimeRadio" Margin="0,0,12,0" Checked="OnPetChecked">
+                <StackPanel>
+                    <TextBlock FontWeight="Medium" Text="史萊姆" />
+                    <TextBlock Margin="0,2,0,0" TextWrapping="Wrap" Text="彈跳移動,會壓扁拉長"
+                               Foreground="{DynamicResource Glass.SubTextBrush}" />
+                </StackPanel>
+            </RadioButton>
+            <RadioButton x:Name="SandSpriteRadio" Checked="OnPetChecked">
+                <StackPanel>
+                    <TextBlock FontWeight="Medium" Text="沙漏精靈" />
+                    <TextBlock Margin="0,2,0,0" TextWrapping="Wrap" Text="會倒立、鑽進沙堆"
+                               Foreground="{DynamicResource Glass.SubTextBrush}" />
+                </StackPanel>
+            </RadioButton>
+        </UniformGrid>
+
+        <TextBlock Text="預覽 · 儲存後,下一次休息就會換成這隻寵物" Margin="0,14,0,6" FontSize="12" TextWrapping="Wrap"
+                   Foreground="{DynamicResource Glass.SubTextBrush}" />
+        <!-- 底色固定用休息畫面的深色(#0F1720),深淺色主題下看到的都和實際休息時一樣。 -->
+        <Border Height="120" CornerRadius="10" Background="#FF0F1720"
+                BorderBrush="{DynamicResource Glass.CardBorderBrush}" BorderThickness="1"
+                ClipToBounds="True"
+                AutomationProperties.Name="寵物預覽">
+            <local:PetLayer x:Name="Preview" />
+        </Border>
+    </StackPanel>
+</UserControl>

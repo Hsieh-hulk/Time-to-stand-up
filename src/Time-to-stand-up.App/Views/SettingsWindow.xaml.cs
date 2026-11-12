@@ -39,6 +39,7 @@ public partial class SettingsWindow : Window
         ApplyHint.Text = "儲存後立即生效,已累計的工作時間會保留。";
         Picker.SetValues(current.WorkMinutes, current.BreakMinutes);
         ProcessEditor.SetItems(current.PauseProcesses);
+        PetPicker.Selected = current.Pet;
         Picker.SelectionChanged += (_, _) => UpdateSaveEnabled();
         UpdateSaveEnabled();
     }
@@ -84,6 +85,7 @@ public partial class SettingsWindow : Window
             BreakMinutes = Picker.BreakMinutes,
             Theme = _theme,
             PauseProcesses = ProcessEditor.Items,
+            Pet = PetPicker.Selected,
         });
         Close();
     }

@@ -51,9 +51,6 @@
     </Window.Resources>
 
     <Grid>
-        <!-- 背景動畫(僅主螢幕,由 BreakAnimations 依設定建立),在內容後方 -->
-        <Grid x:Name="AnimationHost" IsHitTestVisible="False" />
-
         <!-- 內容以 900 DIP 高為基準設計,Loaded / SizeChanged 時用 LayoutTransform 隨螢幕縮放 -->
         <StackPanel x:Name="ContentPanel" HorizontalAlignment="Center" VerticalAlignment="Center">
             <TextBlock x:Name="TitleText"
@@ -80,5 +77,8 @@
                    FontSize="13" Foreground="#FF6C7F90"
                    HorizontalAlignment="Center" VerticalAlignment="Bottom"
                    Margin="0,0,0,24" />
+
+        <!-- 寵物:蓋在內容上方(可以站到沙漏上),不接收滑鼠 -->
+        <local:PetLayer x:Name="PetLayer" />
     </Grid>
 </Window>
